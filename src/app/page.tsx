@@ -16,7 +16,7 @@ export default function Home() {
             </svg>
           </div>
         </div>
-
+ 
         {/* Hero Title */}
         <h1 className="text-5xl font-bold text-center bg-gradient-to-r from-amber-700 to-orange-700 bg-clip-text text-transparent dark:from-amber-400 dark:to-orange-400 sm:text-6xl lg:text-7xl">
           Product Label Generator
