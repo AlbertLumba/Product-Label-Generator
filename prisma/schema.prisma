@@ -1,0 +1,312 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                 String        @id @default(cuid())
+  email              String        @unique
+  emailVerified      DateTime?
+  passwordHash       String
+  name               String?
+  companyName        String?
+  companyLogo        String?
+  companyWebsite     String?
+  companyDescription String?
+  role               UserRole      @default(USER)
+  accountStatus      AccountStatus @default(ACTIVE)
+  apiKey             String?       @unique
+  apiKeyLastUsed     DateTime?
+  lastLoginAt        DateTime?
+  lastLoginIp        String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  categories         Category[]
+  labels             Label[]
+  products           Product[]
+  sessions           Session[]
+  templates          Template[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  userAgent String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  userId      String
+  name        String
+  slug        String
+  description String?
+  parentId    String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products    Product[]
+
+  @@unique([userId, slug])
+  @@map("categories")
+}
+
+model Product {
+  id                String           @id @default(cuid())
+  userId            String
+  categoryId        String?
+  name              String
+  slug              String
+  sku               String?
+  barcode           String?
+  description       String?
+  shortDescription  String?
+  price             Decimal?         @db.Decimal(10, 2)
+  currency          String           @default("USD")
+  usageInstructions String?
+  ingredients       String?
+  warnings          String?
+  specifications    Json?
+  careInstructions  String?
+  mainImage         String?
+  gallery           String[]
+  seoTitle          String?
+  seoDescription    String?
+  productUrl        String?
+  isActive          Boolean          @default(true)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  customFields      CustomField[]
+  labels            Label[]
+  category          Category?        @relation(fields: [categoryId], references: [id])
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  relatedProducts   RelatedProduct[] @relation("ProductToRelated")
+  relatedTo         RelatedProduct[] @relation("RelatedToProduct")
+
+  @@unique([userId, slug])
+  @@unique([userId, sku])
+  @@map("products")
+}
+
+model CustomField {
+  id           String    @id @default(cuid())
+  productId    String
+  name         String
+  value        String
+  type         FieldType @default(TEXT)
+  displayOrder Int       @default(0)
+  product      Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("custom_fields")
+}
+
+model RelatedProduct {
+  id           String       @id @default(cuid())
+  productId    String
+  relatedId    String
+  relationType RelationType @default(RELATED)
+  sortOrder    Int          @default(0)
+  createdAt    DateTime     @default(now())
+  product      Product      @relation("ProductToRelated", fields: [productId], references: [id], onDelete: Cascade)
+  related      Product      @relation("RelatedToProduct", fields: [relatedId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, relatedId])
+  @@map("related_products")
+}
+
+model Template {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  width       Float
+  height      Float
+  margin      Float    @default(0)
+  layout      Json
+  thumbnail   String?
+  isDefault   Boolean  @default(false)
+  isArchived  Boolean  @default(false)
+  tags        String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  labels      Label[]
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("templates")
+}
+
+model Label {
+  id            String       @id @default(cuid())
+  userId        String
+  templateId    String
+  productId     String
+  name          String
+  designData    Json
+  thumbnail     String?
+  pdfUrl        String?
+  imageUrl      String?
+  batchId       String?
+  printQuantity Int          @default(1)
+  paperSize     PaperSize    @default(A4)
+  status        LabelStatus  @default(DRAFT)
+  isArchived    Boolean      @default(false)
+  qrCodeId      String       @unique
+  includeQR     Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  product       Product      @relation(fields: [productId], references: [id])
+  qrCode        QRCode       @relation(fields: [qrCodeId], references: [id])
+  template      Template     @relation(fields: [templateId], references: [id])
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productPage   ProductPage?
+
+  @@index([userId, status])
+  @@map("labels")
+}
+
+model QRCode {
+  id              String     @id @default(cuid())
+  targetUrl       String
+  shortUrl        String?
+  design          Json?
+  errorCorrection ErrorLevel @default(M)
+  size            Int        @default(300)
+  format          QRFormat   @default(PNG)
+  scanCount       Int        @default(0)
+  lastScannedAt   DateTime?
+  isActive        Boolean    @default(true)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  label           Label?
+  scans           QRScan[]
+
+  @@map("qr_codes")
+}
+
+model QRScan {
+  id         String   @id @default(cuid())
+  qrCodeId   String
+  scannedAt  DateTime @default(now())
+  country    String?
+  city       String?
+  region     String?
+  deviceType String?
+  browser    String?
+  os         String?
+  referrer   String?
+  source     String?
+  qrCode     QRCode   @relation(fields: [qrCodeId], references: [id], onDelete: Cascade)
+
+  @@index([qrCodeId, scannedAt])
+  @@map("qr_scans")
+}
+
+model ProductPage {
+  id               String            @id @default(cuid())
+  labelId          String            @unique
+  slug             String            @unique
+  isActive         Boolean           @default(true)
+  theme            Json?
+  showProductInfo  Boolean           @default(true)
+  showHowToUse     Boolean           @default(true)
+  showIngredients  Boolean           @default(true)
+  showWarnings     Boolean           @default(true)
+  showRelated      Boolean           @default(true)
+  showGallery      Boolean           @default(true)
+  customSections   Json?
+  seoTitle         String?
+  seoDescription   String?
+  ogImage          String?
+  viewCount        Int               @default(0)
+  lastViewedAt     DateTime?
+  showFeedback     Boolean           @default(false)
+  showShareButtons Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  feedback         ProductFeedback[]
+  label            Label             @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@map("product_pages")
+}
+
+model ProductFeedback {
+  id            String      @id @default(cuid())
+  productPageId String
+  rating        Int?
+  comment       String?
+  isHelpful     Boolean?
+  createdAt     DateTime    @default(now())
+  productPage   ProductPage @relation(fields: [productPageId], references: [id], onDelete: Cascade)
+
+  @@map("product_feedback")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum FieldType {
+  TEXT
+  NUMBER
+  DATE
+  BOOLEAN
+  URL
+  RICH_TEXT
+}
+
+enum RelationType {
+  RELATED
+  ACCESSORY
+  ALTERNATIVE
+  COMPLEMENTARY
+  UPSELL
+}
+
+enum LabelStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum ErrorLevel {
+  L
+  M
+  Q
+  H
+}
+
+enum QRFormat {
+  PNG
+  SVG
+  JPG
+}
+
+enum PaperSize {
+  A4
+  LETTER
+  A3
+  CUSTOM
+}
