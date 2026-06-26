@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { apiHandler, getBody, getPagination } from "@/lib/api/handler";
 import { validate } from "@/lib/api/validate";
-import { ok, created, unauthorized, serverError } from "@/lib/api/types";
+import { ok, created, unauthorized } from "@/lib/api/server";
 import { getUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
