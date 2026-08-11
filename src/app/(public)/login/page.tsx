@@ -6,8 +6,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { api } from '@/lib/api/client'
+import { Card } from '@/components/ui/Card'
+import { Input } from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
+import { Alert } from '@/components/ui/Alert'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -18,15 +21,15 @@ export default function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    
+
     if (loading) return // Prevent double submit
-    
+
     setError('')
     setLoading(true)
 
     try {
       const res = await api.post<{
-        user: { id: string; email: string; name: string; companyName: string; role: string }
+        user: { id: string; email: string; name: string }
       }>('/api/auth/login', { email, password })
 
       if (!res.success) {
@@ -44,27 +47,23 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md space-y-8">
-        
+    <div className="flex min-h-screen items-center justify-center bg-[var(--gw-bg)] px-4">
+      <div className="w-full max-w-md flex flex-col gap-6">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">LabelGen</h1>
-          <p className="mt-2 text-gray-600">Sign in to your account</p>
+          <h1 className="font-mono text-[24px] tracking-[0.05em] text-[var(--gw-text)]">
+            DEBT TRACKER
+          </h1>
+          <p className="mt-2 font-mono text-[13px] text-[var(--gw-muted)]">
+            Sign in to your account
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="rounded-xl bg-white p-8 shadow-sm border border-gray-200 space-y-5">
-          
-          {error && (
-            <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
-              {error}
-            </div>
-          )}
+        <Card className="p-8">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            {error && <Alert variant="error">{error}</Alert>}
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
+            <Input
+              label="Email"
               id="email"
               name="email"
               type="email"
@@ -72,16 +71,11 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
-              placeholder="sarah@organichome.com"
+              placeholder="admin@example.com"
             />
-          </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <input
+            <Input
+              label="Password"
               id="password"
               name="password"
               type="password"
@@ -89,33 +83,18 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
               placeholder="••••••••"
             />
-          </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition"
-          >
-            {loading ? 'Signing in...' : 'Sign in'}
-          </button>
+            <Button type="submit" variant="primary" size="md" loading={loading} className="w-full">
+              {loading ? 'Signing in...' : 'Sign in'}
+            </Button>
+          </form>
+        </Card>
 
-          <p className="text-center text-sm text-gray-500">
-            Don&apos;t have an account?{' '}
-            <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
-              Create one
-            </Link>
-          </p>
-        </form>
-
-        <div className="rounded-xl bg-indigo-50 p-4 text-sm text-indigo-700">
-          <p className="font-medium mb-1">🔑 Test accounts</p>
-          <p>sarah@organichome.com</p>
-          <p>mike@craftbrewing.com</p>
-          <p className="mt-1 text-indigo-500">password: password123</p>
-        </div>
+        <Alert variant="info" title="Test Account">
+          admin@example.com / admin123
+        </Alert>
       </div>
     </div>
   )

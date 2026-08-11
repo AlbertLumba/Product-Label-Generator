@@ -1,0 +1,161 @@
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📁 src/app/api/debts/update/route.ts
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import { z } from "zod";
+import { apiHandler, getBody } from "@/lib/api/handler";
+import { validate } from "@/lib/api/validate";
+import { ok, notFound, badRequest } from "@/lib/api/server";
+import prisma from "@/lib/prisma";
+import { serializeDebt } from "@/lib/api/debt-serializer";
+
+// ─── Schemas ──────────────────────────────────────────────────
+
+const updateDebtSchema = z.object({
+  debtId: z.string().min(1, "debtId is required"),
+  debtorName: z.string().trim().min(1).optional(),
+  debtorEmail: z.string().trim().email("Invalid email").optional().or(z.literal("")),
+  notes: z.string().trim().optional(),
+  status: z.enum(["ACTIVE", "PAID", "CANCELLED"]).optional(),
+});
+
+const updateItemSchema = z.object({
+  itemId: z.string().min(1, "itemId is required"),
+  itemName: z.string().trim().min(1).optional(),
+  description: z.string().trim().optional(),
+  quantity: z.number().int().positive().optional(),
+  unitPrice: z.number().nonnegative().optional(),
+});
+
+const deleteItemSchema = z.object({
+  debtId: z.string().min(1, "debtId is required"),
+  itemId: z.string().min(1, "itemId is required"),
+});
+
+// ─── POST: Update debt or item ──────────────────────────────────
+
+export const POST = apiHandler(async (req) => {
+  const body = await getBody(req);
+  const action = body.action || "updateDebt";
+
+  switch (action) {
+    case "updateDebt": {
+      const result = validate(updateDebtSchema, body);
+      if (!result.success) return result.response;
+
+      const { debtId, ...updateData } = result.data;
+
+      const existing = await prisma.debt.findUnique({ where: { id: debtId } });
+      if (!existing) return notFound("Debt not found");
+
+      // Clean undefined values
+      const cleanData: any = {};
+      if (updateData.debtorName !== undefined) cleanData.debtorName = updateData.debtorName;
+      if (updateData.debtorEmail !== undefined) cleanData.debtorEmail = updateData.debtorEmail || null;
+      if (updateData.notes !== undefined) cleanData.notes = updateData.notes || null;
+      if (updateData.status !== undefined) cleanData.status = updateData.status;
+
+      const updated = await prisma.debt.update({
+        where: { id: debtId },
+        data: cleanData,
+        include: { items: true, payments: true },
+      });
+
+      return ok(serializeDebt(updated));
+    }
+
+    case "updateItem": {
+      const result = validate(updateItemSchema, body);
+      if (!result.success) return result.response;
+
+      const { itemId, ...updateData } = result.data;
+
+      const item = await prisma.debtItem.findUnique({
+        where: { id: itemId },
+        include: { debt: true },
+      });
+      if (!item) return notFound("Item not found");
+
+      const cleanData: any = {};
+      if (updateData.itemName !== undefined) cleanData.itemName = updateData.itemName;
+      if (updateData.description !== undefined) cleanData.description = updateData.description || null;
+      if (updateData.quantity !== undefined) cleanData.quantity = updateData.quantity;
+      if (updateData.unitPrice !== undefined) cleanData.unitPrice = updateData.unitPrice;
+
+      // Recalculate total price if quantity or unit price changed
+      const newQuantity = updateData.quantity ?? item.quantity;
+      const newUnitPrice = updateData.unitPrice ?? Number(item.unitPrice);
+      cleanData.totalPrice = newQuantity * newUnitPrice;
+
+      // Update item
+      await prisma.debtItem.update({
+        where: { id: itemId },
+        data: cleanData,
+      });
+
+      // Recalculate debt totals
+      const allItems = await prisma.debtItem.findMany({
+        where: { debtId: item.debtId },
+      });
+      const newTotalAmount = allItems.reduce((sum, i) => sum + Number(i.totalPrice), 0);
+      const totalPaid = Number(item.debt.totalAmount) - Number(item.debt.balance);
+      const newBalance = Math.max(0, newTotalAmount - totalPaid);
+
+      const updated = await prisma.debt.update({
+        where: { id: item.debtId },
+        data: {
+          totalAmount: newTotalAmount,
+          balance: newBalance,
+          status: newBalance === 0 ? "PAID" : item.debt.status,
+        },
+        include: { items: true, payments: true },
+      });
+
+      return ok(serializeDebt(updated));
+    }
+
+    case "deleteItem": {
+      const result = validate(deleteItemSchema, body);
+      if (!result.success) return result.response;
+
+      const { debtId, itemId } = result.data;
+
+      const item = await prisma.debtItem.findUnique({ where: { id: itemId } });
+      if (!item) return notFound("Item not found");
+
+      // Delete item
+      await prisma.debtItem.delete({ where: { id: itemId } });
+
+      // Recalculate debt totals
+      const remainingItems = await prisma.debtItem.findMany({
+        where: { debtId },
+      });
+
+      if (remainingItems.length === 0) {
+        // No items left - delete the debt
+        await prisma.debt.delete({ where: { id: debtId } });
+        return ok({ deleted: true, debtId });
+      }
+
+      const newTotalAmount = remainingItems.reduce((sum, i) => sum + Number(i.totalPrice), 0);
+      const debt = await prisma.debt.findUnique({ where: { id: debtId } });
+      const totalPaid = Number(debt!.totalAmount) - Number(debt!.balance);
+      const newBalance = Math.max(0, newTotalAmount - totalPaid);
+
+      const updated = await prisma.debt.update({
+        where: { id: debtId },
+        data: {
+          totalAmount: newTotalAmount,
+          balance: newBalance,
+          status: newBalance === 0 ? "PAID" : debt!.status,
+        },
+        include: { items: true, payments: true },
+      });
+
+      return ok(serializeDebt(updated));
+    }
+
+    default:
+      return badRequest("Invalid action");
+  }
+});
