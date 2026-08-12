@@ -66,7 +66,7 @@ export function EditItemModal({ debt, item, onClose, onUpdated }: EditItemModalP
       }
 
       onUpdated(res.data);
-    } catch (err) {
+    } catch {
       setError("Network error. Please try again.");
     } finally {
       setLoading(false);
@@ -98,7 +98,7 @@ export function EditItemModal({ debt, item, onClose, onUpdated }: EditItemModalP
       } else if (res.data && "id" in res.data) {
         onUpdated(res.data as Debt);
       }
-    } catch (err) {
+    } catch {
       setError("Network error. Please try again.");
       setDeleting(false);
     }
@@ -238,7 +238,7 @@ export function EditItemModal({ debt, item, onClose, onUpdated }: EditItemModalP
               </div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Delete Item?</h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                This will remove "{item.itemName}" and recalculate the total.
+                This will remove {item.itemName} and recalculate the total.
               </p>
               <div className="flex gap-3">
                 <button

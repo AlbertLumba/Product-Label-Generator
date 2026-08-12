@@ -10,10 +10,12 @@ import type { Debt } from "../components/DebtCard";
 export default async function DebtDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
+  
   const debt = await prisma.debt.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { items: true, payments: true },
   });
 

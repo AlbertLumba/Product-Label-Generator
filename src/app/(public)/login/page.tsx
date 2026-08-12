@@ -2,47 +2,47 @@
 // 📁 src/app/(public)/login/page.tsx
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { api } from '@/lib/api/client'
-import { Card } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
-import { Button } from '@/components/ui/Button'
-import { Alert } from '@/components/ui/Alert'
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { api } from "@/lib/api/client";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+    e.preventDefault();
 
-    if (loading) return // Prevent double submit
+    if (loading) return; // Prevent double submit
 
-    setError('')
-    setLoading(true)
+    setError("");
+    setLoading(true);
 
     try {
       const res = await api.post<{
-        user: { id: string; email: string; name: string }
-      }>('/api/auth/login', { email, password })
+        user: { id: string; email: string; name: string };
+      }>("/api/auth/login", { email, password });
 
       if (!res.success) {
-        setError(res.message)
-        return
+        setError(res.message);
+        return;
       }
 
-      router.push('/dashboard')
-      router.refresh()
-    } catch (err) {
-      setError('Network error. Please try again.')
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      setError("Network error. Please try again.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -86,8 +86,14 @@ export default function LoginPage() {
               placeholder="••••••••"
             />
 
-            <Button type="submit" variant="primary" size="md" loading={loading} className="w-full">
-              {loading ? 'Signing in...' : 'Sign in'}
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              loading={loading}
+              className="w-full"
+            >
+              {loading ? "Signing in..." : "Sign in"}
             </Button>
           </form>
         </Card>
@@ -97,5 +103,5 @@ export default function LoginPage() {
         </Alert>
       </div>
     </div>
-  )
+  );
 }

@@ -64,7 +64,7 @@ export function EditDebtorModal({ debt, onClose, onUpdated }: EditDebtorModalPro
       }
 
       onUpdated(res.data);
-    } catch (err) {
+    } catch {
       setError("Network error. Please try again.");
     } finally {
       setLoading(false);

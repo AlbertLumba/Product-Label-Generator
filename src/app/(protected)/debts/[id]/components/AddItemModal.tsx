@@ -91,7 +91,7 @@ export function AddItemModal({ debt, onClose, onUpdated }: AddItemModalProps) {
       }
 
       onUpdated(res.data);
-    } catch (err) {
+    } catch {
       setError("Network error. Please try again.");
     } finally {
       setLoading(false);

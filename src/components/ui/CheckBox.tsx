@@ -15,7 +15,7 @@ export interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElemen
 }
 
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ label, description, className = "", ...props }, ref) => {
+  ({ label, description, ...props }, ref) => {
     return (
       <label className="flex items-start gap-2 cursor-pointer group">
         <div className="relative flex-shrink-0 mt-0.5">

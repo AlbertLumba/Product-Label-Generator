@@ -98,7 +98,7 @@ export function NewDebtModal({ onClose, onCreated }: NewDebtModalProps) {
       }
 
       onCreated(res.data);
-    } catch (err) {
+    } catch {
       setError("Network error. Please try again.");
     } finally {
       setLoading(false);

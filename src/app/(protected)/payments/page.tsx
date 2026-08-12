@@ -5,6 +5,7 @@
 import { serverFetch } from "@/lib/api/server-fetch";
 import { PaymentsClient } from "./components/PaymentsClient";
 import type { ApiResponse } from "@/lib/api/types";
+import type { Debt } from "@/app/(protected)/debts/components/DebtCard";
 
 export interface PaymentRecord {
   id: string;
@@ -22,33 +23,33 @@ export interface PaymentRecord {
 }
 
 export default async function PaymentsPage() {
-  const res = await serverFetch<ApiResponse<PaymentRecord[]>>("/api/debts/fetch");
+  const res = await serverFetch<ApiResponse<Debt[]>>("/api/debts/fetch");
   const debts = res.data ?? [];
   
   // Extract all payments from all debts
   const payments: PaymentRecord[] = [];
   
-  if (Array.isArray(debts)) {
-    debts.forEach((debt: any) => {
-      if (debt.payments && debt.payments.length > 0) {
-        debt.payments.forEach((payment: any) => {
-          payments.push({
-            id: payment.id,
-            amount: payment.amount,
-            paymentDate: payment.paymentDate,
-            method: payment.method,
-            notes: payment.notes,
-            debt: {
-              id: debt.id,
-              debtorName: debt.debtorName,
-              accessCode: debt.accessCode,
-              balance: debt.balance,
-              status: debt.status,
-            },
-          });
+  for (const debt of debts) {
+    if (debt.payments && debt.payments.length > 0) {
+      for (const payment of debt.payments) {
+        payments.push({
+          id: payment.id,
+          amount: payment.amount,
+          paymentDate: typeof payment.paymentDate === "string" 
+            ? payment.paymentDate 
+            : (payment.paymentDate as Date).toISOString(),
+          method: payment.method,
+          notes: payment.notes,
+          debt: {
+            id: debt.id,
+            debtorName: debt.debtorName,
+            accessCode: debt.accessCode,
+            balance: debt.balance,
+            status: debt.status,
+          },
         });
       }
-    });
+    }
   }
 
   // Sort by most recent first

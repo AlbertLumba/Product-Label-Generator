@@ -11,9 +11,7 @@ import {
   TrendingUp,
   DollarSign,
   Users,
-  Clock,
   ArrowRight,
-  CreditCard,
 } from "lucide-react";
 import type { DashboardData } from "../page";
 

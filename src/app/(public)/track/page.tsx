@@ -36,7 +36,7 @@ export default function TrackPage() {
       }
 
       setDebt(res.data);
-    } catch (err) {
+    } catch {
       setError("Network error. Please try again.");
     } finally {
       setLoading(false);

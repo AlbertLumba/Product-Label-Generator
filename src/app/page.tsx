@@ -1,7 +1,5 @@
 // src/app/page.tsx
 
-import Image from "next/image";
-
 export default function Home() {
   return (
     <div className="flex flex-col flex-1 items-center justify-center bg-gradient-to-br from-amber-50 to-orange-100 font-sans dark:from-gray-900 dark:to-gray-800">

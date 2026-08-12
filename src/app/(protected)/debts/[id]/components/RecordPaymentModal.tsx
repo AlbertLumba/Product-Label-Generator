@@ -24,20 +24,17 @@ const paymentMethods: { value: PaymentMethod; label: string }[] = [
 ];
 
 export function RecordPaymentModal({ debt, prefillAmount, onClose, onUpdated }: RecordPaymentModalProps) {
-  const [amount, setAmount] = useState("");
+  // Initialize amount from prefillAmount directly in useState
+  const [amount, setAmount] = useState(() => 
+    prefillAmount && prefillAmount > 0 ? prefillAmount.toString() : ""
+  );
   const [method, setMethod] = useState<PaymentMethod>("CASH");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-
-  // Set prefill amount when item is clicked
-  useEffect(() => {
-    if (prefillAmount && prefillAmount > 0) {
-      setAmount(prefillAmount.toString());
-      setSelectedItemId("prefilled");
-    }
-  }, [prefillAmount]);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(
+    prefillAmount && prefillAmount > 0 ? "prefilled" : null
+  );
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -85,7 +82,7 @@ export function RecordPaymentModal({ debt, prefillAmount, onClose, onUpdated }: 
       }
 
       onUpdated(res.data);
-    } catch (err) {
+    } catch {
       setError("Network error. Please try again.");
     } finally {
       setLoading(false);

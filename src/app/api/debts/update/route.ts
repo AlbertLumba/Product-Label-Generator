@@ -32,11 +32,13 @@ const deleteItemSchema = z.object({
   itemId: z.string().min(1, "itemId is required"),
 });
 
+
+
 // ─── POST: Update debt or item ──────────────────────────────────
 
 export const POST = apiHandler(async (req) => {
-  const body = await getBody(req);
-  const action = body.action || "updateDebt";
+  const body = (await getBody(req)) as Record<string, unknown>;
+  const action = (body.action as string) || "updateDebt";
 
   switch (action) {
     case "updateDebt": {
@@ -49,7 +51,7 @@ export const POST = apiHandler(async (req) => {
       if (!existing) return notFound("Debt not found");
 
       // Clean undefined values
-      const cleanData: any = {};
+      const cleanData: Record<string, unknown> = {};
       if (updateData.debtorName !== undefined) cleanData.debtorName = updateData.debtorName;
       if (updateData.debtorEmail !== undefined) cleanData.debtorEmail = updateData.debtorEmail || null;
       if (updateData.notes !== undefined) cleanData.notes = updateData.notes || null;
@@ -76,7 +78,7 @@ export const POST = apiHandler(async (req) => {
       });
       if (!item) return notFound("Item not found");
 
-      const cleanData: any = {};
+      const cleanData: Record<string, unknown> = {};
       if (updateData.itemName !== undefined) cleanData.itemName = updateData.itemName;
       if (updateData.description !== undefined) cleanData.description = updateData.description || null;
       if (updateData.quantity !== undefined) cleanData.quantity = updateData.quantity;
