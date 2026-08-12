@@ -40,9 +40,11 @@ export const GET = apiHandler(async (req: NextRequest) => {
     return ok(serializeDebt(debt));
   }
 
+  // Unpaid debts first (ACTIVE < PAID < CANCELLED per the enum's declared
+  // order in schema.prisma), most recently created within each group.
   const debts = await prisma.debt.findMany({
     include,
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
   });
 
   return ok(debts.map(serializeDebt));
