@@ -12,6 +12,7 @@ import type { Debt, PaymentMethod } from "../../components/DebtCard";
 interface RecordPaymentModalProps {
   debt: Debt;
   prefillAmount?: number | null;
+  prefillItemId?: string | null;
   onClose: () => void;
   onUpdated: (debt: Debt) => void;
 }
@@ -23,8 +24,7 @@ const paymentMethods: { value: PaymentMethod; label: string }[] = [
   { value: "OTHER", label: "Other" },
 ];
 
-export function RecordPaymentModal({ debt, prefillAmount, onClose, onUpdated }: RecordPaymentModalProps) {
-  // Initialize amount from prefillAmount directly in useState
+export function RecordPaymentModal({ debt, prefillAmount, prefillItemId, onClose, onUpdated }: RecordPaymentModalProps) {
   const [amount, setAmount] = useState(() => 
     prefillAmount && prefillAmount > 0 ? prefillAmount.toString() : ""
   );
@@ -33,7 +33,7 @@ export function RecordPaymentModal({ debt, prefillAmount, onClose, onUpdated }: 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(
-    prefillAmount && prefillAmount > 0 ? "prefilled" : null
+    prefillItemId || null
   );
 
   useEffect(() => {
@@ -65,12 +65,22 @@ export function RecordPaymentModal({ debt, prefillAmount, onClose, onUpdated }: 
       return;
     }
 
+    const activeItemId = selectedItemId && selectedItemId !== "prefilled" && selectedItemId !== "full"
+      ? selectedItemId 
+      : debt.items[0]?.id;
+
+    if (!activeItemId) {
+      setError("No item selected");
+      return;
+    }
+
     setError("");
     setLoading(true);
 
     try {
       const res = await api.post<Debt>("/api/debts/payment", {
         debtId: debt.id,
+        itemId: activeItemId,
         amount: paymentAmount,
         method,
         notes: notes || undefined,
@@ -90,12 +100,11 @@ export function RecordPaymentModal({ debt, prefillAmount, onClose, onUpdated }: 
   }
 
   const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+    new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(value);
 
   // Calculate remaining per item based on payments made
   const totalPaid = debt.totalAmount - debt.balance;
 
-  // Calculate remaining amount for each item
   const itemsWithRemaining = debt.items.map((item, index) => {
     const previousTotal = debt.items
       .slice(0, index)
@@ -112,10 +121,8 @@ export function RecordPaymentModal({ debt, prefillAmount, onClose, onUpdated }: 
     };
   });
 
-  // Only show items that still have remaining balance
   const unpaidItems = itemsWithRemaining.filter((item) => !item.isFullyPaid);
 
-  // Quick amounts based on individual remaining item prices
   const quickAmounts = unpaidItems
     .slice(0, 4)
     .map((item) => ({
@@ -126,7 +133,6 @@ export function RecordPaymentModal({ debt, prefillAmount, onClose, onUpdated }: 
       isPartiallyPaid: item.remaining < item.totalPrice,
     }));
 
-  // Add "Full Balance" option
   if (unpaidItems.length > 1 || debt.balance > 0) {
     quickAmounts.push({
       id: "full",
@@ -185,7 +191,7 @@ export function RecordPaymentModal({ debt, prefillAmount, onClose, onUpdated }: 
               Amount
             </label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg text-gray-400">$</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg text-gray-400">₱</span>
               <input
                 type="number"
                 min={0.01}

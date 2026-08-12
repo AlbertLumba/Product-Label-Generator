@@ -44,19 +44,19 @@ export default function TrackPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--gw-bg)] px-4 py-12">
-      <div className="w-full max-w-md flex flex-col gap-6">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950 px-4 py-8 sm:py-12">
+      <div className="w-full max-w-md sm:max-w-lg lg:max-w-xl flex flex-col gap-4 sm:gap-6">
         <div className="text-center">
-          <h1 className="font-mono text-[24px] tracking-[0.05em] text-[var(--gw-text)]">
-            TRACK YOUR DEBT
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+            Track Your Debt
           </h1>
-          <p className="mt-2 font-mono text-[13px] text-[var(--gw-muted)]">
+          <p className="mt-1.5 sm:mt-2 text-sm sm:text-base text-gray-500 dark:text-gray-400">
             Enter your access code to view your balance
           </p>
         </div>
 
-        <Card className="p-8">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <Card className="p-5 sm:p-8">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 sm:gap-5">
             {error && <Alert variant="error">{error}</Alert>}
 
             <Input
@@ -66,13 +66,19 @@ export default function TrackPage() {
               type="text"
               autoComplete="off"
               required
-              status="key"
               value={accessCode}
-              onChange={(e) => setAccessCode(e.target.value)}
+              onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
               placeholder="JOHN123"
+              className="text-base sm:text-sm"
             />
 
-            <Button type="submit" variant="primary" size="md" loading={loading} className="w-full">
+            <Button 
+              type="submit" 
+              variant="primary" 
+              size="md" 
+              loading={loading} 
+              className="w-full py-3 sm:py-2.5"
+            >
               {loading ? "Looking up..." : "View My Debt"}
             </Button>
           </form>

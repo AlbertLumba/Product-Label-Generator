@@ -30,24 +30,38 @@ model Debt {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   items       DebtItem[]
-  payments    Payment[]
+  payments    Payment[] // Keep for debt-level payments if needed
   
   @@index([debtorName, accessCode])
   @@map("debts")
 }
 
 model DebtItem {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   debtId      String
   itemName    String
   description String?
-  quantity    Int      @default(1)
-  unitPrice   Decimal  @db.Decimal(10, 2)
-  totalPrice  Decimal  @db.Decimal(10, 2)
-  purchasedAt DateTime @default(now())
-  debt        Debt     @relation(fields: [debtId], references: [id], onDelete: Cascade)
+  quantity    Int       @default(1)
+  unitPrice   Decimal   @db.Decimal(10, 2)
+  totalPrice  Decimal   @db.Decimal(10, 2)
+  paidAmount  Decimal   @db.Decimal(10, 2) @default(0)
+  purchasedAt DateTime  @default(now())
+  debt        Debt      @relation(fields: [debtId], references: [id], onDelete: Cascade)
+  payments    ItemPayment[]
   
   @@map("debt_items")
+}
+
+model ItemPayment {
+  id          String        @id @default(cuid())
+  itemId      String
+  amount      Decimal       @db.Decimal(10, 2)
+  paymentDate DateTime      @default(now())
+  method      PaymentMethod
+  notes       String?
+  item        DebtItem      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  
+  @@map("item_payments")
 }
 
 model Payment {

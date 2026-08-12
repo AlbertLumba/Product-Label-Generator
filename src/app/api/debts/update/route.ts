@@ -32,7 +32,42 @@ const deleteItemSchema = z.object({
   itemId: z.string().min(1, "itemId is required"),
 });
 
+// ─── Helpers ──────────────────────────────────────────────────
 
+const fullInclude = {
+  items: {
+    include: {
+      payments: {
+        orderBy: { paymentDate: "desc" as const },
+      },
+    },
+  },
+  payments: {
+    orderBy: { paymentDate: "desc" as const },
+  },
+};
+
+async function recalculateDebt(debtId: string) {
+  const allItems = await prisma.debtItem.findMany({
+    where: { debtId },
+  });
+  const newTotalAmount = allItems.reduce((sum, i) => sum + Number(i.totalPrice), 0);
+  const newTotalPaid = allItems.reduce((sum, i) => sum + Number(i.paidAmount), 0);
+  const newBalance = newTotalAmount - newTotalPaid;
+
+  const debt = await prisma.debt.findUnique({ where: { id: debtId } });
+  const newStatus = newBalance <= 0 ? "PAID" : debt!.status === "CANCELLED" ? "CANCELLED" : "ACTIVE";
+
+  return prisma.debt.update({
+    where: { id: debtId },
+    data: {
+      totalAmount: newTotalAmount,
+      balance: newBalance,
+      status: newStatus as "ACTIVE" | "PAID" | "CANCELLED",
+    },
+    include: fullInclude,
+  });
+}
 
 // ─── POST: Update debt or item ──────────────────────────────────
 
@@ -50,7 +85,6 @@ export const POST = apiHandler(async (req) => {
       const existing = await prisma.debt.findUnique({ where: { id: debtId } });
       if (!existing) return notFound("Debt not found");
 
-      // Clean undefined values
       const cleanData: Record<string, unknown> = {};
       if (updateData.debtorName !== undefined) cleanData.debtorName = updateData.debtorName;
       if (updateData.debtorEmail !== undefined) cleanData.debtorEmail = updateData.debtorEmail || null;
@@ -60,7 +94,7 @@ export const POST = apiHandler(async (req) => {
       const updated = await prisma.debt.update({
         where: { id: debtId },
         data: cleanData,
-        include: { items: true, payments: true },
+        include: fullInclude,
       });
 
       return ok(serializeDebt(updated));
@@ -84,35 +118,16 @@ export const POST = apiHandler(async (req) => {
       if (updateData.quantity !== undefined) cleanData.quantity = updateData.quantity;
       if (updateData.unitPrice !== undefined) cleanData.unitPrice = updateData.unitPrice;
 
-      // Recalculate total price if quantity or unit price changed
       const newQuantity = updateData.quantity ?? item.quantity;
       const newUnitPrice = updateData.unitPrice ?? Number(item.unitPrice);
       cleanData.totalPrice = newQuantity * newUnitPrice;
 
-      // Update item
       await prisma.debtItem.update({
         where: { id: itemId },
         data: cleanData,
       });
 
-      // Recalculate debt totals
-      const allItems = await prisma.debtItem.findMany({
-        where: { debtId: item.debtId },
-      });
-      const newTotalAmount = allItems.reduce((sum, i) => sum + Number(i.totalPrice), 0);
-      const totalPaid = Number(item.debt.totalAmount) - Number(item.debt.balance);
-      const newBalance = Math.max(0, newTotalAmount - totalPaid);
-
-      const updated = await prisma.debt.update({
-        where: { id: item.debtId },
-        data: {
-          totalAmount: newTotalAmount,
-          balance: newBalance,
-          status: newBalance === 0 ? "PAID" : item.debt.status,
-        },
-        include: { items: true, payments: true },
-      });
-
+      const updated = await recalculateDebt(item.debtId);
       return ok(serializeDebt(updated));
     }
 
@@ -125,35 +140,21 @@ export const POST = apiHandler(async (req) => {
       const item = await prisma.debtItem.findUnique({ where: { id: itemId } });
       if (!item) return notFound("Item not found");
 
-      // Delete item
+      // Delete item payments first, then item
+      await prisma.itemPayment.deleteMany({ where: { itemId } });
       await prisma.debtItem.delete({ where: { id: itemId } });
 
-      // Recalculate debt totals
       const remainingItems = await prisma.debtItem.findMany({
         where: { debtId },
       });
 
       if (remainingItems.length === 0) {
-        // No items left - delete the debt
+        await prisma.payment.deleteMany({ where: { debtId } });
         await prisma.debt.delete({ where: { id: debtId } });
         return ok({ deleted: true, debtId });
       }
 
-      const newTotalAmount = remainingItems.reduce((sum, i) => sum + Number(i.totalPrice), 0);
-      const debt = await prisma.debt.findUnique({ where: { id: debtId } });
-      const totalPaid = Number(debt!.totalAmount) - Number(debt!.balance);
-      const newBalance = Math.max(0, newTotalAmount - totalPaid);
-
-      const updated = await prisma.debt.update({
-        where: { id: debtId },
-        data: {
-          totalAmount: newTotalAmount,
-          balance: newBalance,
-          status: newBalance === 0 ? "PAID" : debt!.status,
-        },
-        include: { items: true, payments: true },
-      });
-
+      const updated = await recalculateDebt(debtId);
       return ok(serializeDebt(updated));
     }
 

@@ -20,7 +20,7 @@ export interface DebtDetailProps {
 // ─── Helpers ───────────────────────────────────────────────────
 
 const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+  new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(value);
 
 const formatDate = (value: string | Date) =>
   new Date(value).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
@@ -67,6 +67,7 @@ export const DebtDetail: React.FC<DebtDetailProps> = ({ debt }) => {
   const [currentDebt, setCurrentDebt] = useState(debt);
   const [showPayments, setShowPayments] = useState(false);
   const [prefillAmount, setPrefillAmount] = useState<number | null>(null);
+  const [selectedPaymentItemId, setSelectedPaymentItemId] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<DebtItem | null>(null);
   const [showEditDebtor, setShowEditDebtor] = useState(false);
 
@@ -74,6 +75,7 @@ export const DebtDetail: React.FC<DebtDetailProps> = ({ debt }) => {
 
   function handleItemClick(item: DebtItem) {
     if (currentDebt.status !== "ACTIVE") return;
+    setSelectedPaymentItemId(item.id);
     setPrefillAmount(item.totalPrice);
     setShowPayment(true);
   }
@@ -86,6 +88,7 @@ export const DebtDetail: React.FC<DebtDetailProps> = ({ debt }) => {
   function handlePaymentClose() {
     setShowPayment(false);
     setPrefillAmount(null);
+    setSelectedPaymentItemId(null);
   }
 
   return (
@@ -105,6 +108,7 @@ export const DebtDetail: React.FC<DebtDetailProps> = ({ debt }) => {
               <>
                 <button
                   onClick={() => {
+                    setSelectedPaymentItemId(null);
                     setPrefillAmount(null);
                     setShowPayment(true);
                   }}
@@ -338,6 +342,7 @@ export const DebtDetail: React.FC<DebtDetailProps> = ({ debt }) => {
         <RecordPaymentModal
           debt={currentDebt}
           prefillAmount={prefillAmount}
+          prefillItemId={selectedPaymentItemId}
           onClose={handlePaymentClose}
           onUpdated={(updatedDebt) => {
             setCurrentDebt(updatedDebt);

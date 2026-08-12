@@ -16,10 +16,23 @@ export const GET = apiHandler(async (req: NextRequest) => {
   const id = req.nextUrl.searchParams.get("id");
   const accessCode = req.nextUrl.searchParams.get("accessCode");
 
+  const include = {
+    items: {
+      include: {
+        payments: {
+          orderBy: { paymentDate: "desc" as const },
+        },
+      },
+    },
+    payments: {
+      orderBy: { paymentDate: "desc" as const },
+    },
+  };
+
   if (id || accessCode) {
     const debt = await prisma.debt.findFirst({
       where: id ? { id } : { accessCode: accessCode! },
-      include: { items: true, payments: true },
+      include,
     });
 
     if (!debt) return notFound("Debt not found");
@@ -28,7 +41,7 @@ export const GET = apiHandler(async (req: NextRequest) => {
   }
 
   const debts = await prisma.debt.findMany({
-    include: { items: true, payments: true },
+    include,
     orderBy: { createdAt: "desc" },
   });
 
