@@ -14,6 +14,7 @@ async function request<T>(
     ...options,
     headers: { "Content-Type": "application/json", ...options.headers },
     credentials: "include",
+    cache: "no-store",
   });
   return res.json();
 }
