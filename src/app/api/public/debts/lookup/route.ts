@@ -46,6 +46,7 @@ export const POST = apiHandler(async (req) => {
       quantity: item.quantity,
       unitPrice: Number(item.unitPrice),
       totalPrice: Number(item.totalPrice),
+      paidAmount: Number(item.paidAmount),
       purchasedAt: item.purchasedAt,
     })),
     payments: debt.payments.map((payment) => ({

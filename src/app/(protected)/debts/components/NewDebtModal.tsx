@@ -55,12 +55,12 @@ export function NewDebtModal({ onClose, onCreated }: NewDebtModalProps) {
 
   const total = items.reduce(
     (sum, item) => sum + item.quantity * item.unitPrice,
-    0
+    0,
   );
 
   function updateItem(index: number, patch: Partial<ItemRow>) {
     setItems((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, ...patch } : item))
+      prev.map((item, i) => (i === index ? { ...item, ...patch } : item)),
     );
   }
 
@@ -106,7 +106,10 @@ export function NewDebtModal({ onClose, onCreated }: NewDebtModalProps) {
   }
 
   const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+    new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
+    }).format(value);
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh]">
@@ -122,11 +125,18 @@ export function NewDebtModal({ onClose, onCreated }: NewDebtModalProps) {
         <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100 dark:border-gray-800 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-950 rounded-xl flex items-center justify-center">
-              <Receipt size={20} className="text-indigo-600 dark:text-indigo-400" />
+              <Receipt
+                size={20}
+                className="text-indigo-600 dark:text-indigo-400"
+              />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">New Debt</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Record what someone owes you</p>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                New Debt
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Record what someone owes you
+              </p>
             </div>
           </div>
           <button
@@ -161,7 +171,10 @@ export function NewDebtModal({ onClose, onCreated }: NewDebtModalProps) {
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   <Mail size={14} />
-                  Email <span className="text-gray-400 text-xs font-normal">(optional)</span>
+                  Email{" "}
+                  <span className="text-gray-400 text-xs font-normal">
+                    (optional)
+                  </span>
                 </label>
                 <input
                   type="email"
@@ -177,7 +190,10 @@ export function NewDebtModal({ onClose, onCreated }: NewDebtModalProps) {
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 <FileText size={14} />
-                Notes <span className="text-gray-400 text-xs font-normal">(optional)</span>
+                Notes{" "}
+                <span className="text-gray-400 text-xs font-normal">
+                  (optional)
+                </span>
               </label>
               <textarea
                 value={notes}
@@ -191,7 +207,9 @@ export function NewDebtModal({ onClose, onCreated }: NewDebtModalProps) {
             {/* Items Section */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Items</h3>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Items
+                </h3>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
                   {items.length} item{items.length !== 1 ? "s" : ""}
                 </span>
@@ -210,7 +228,9 @@ export function NewDebtModal({ onClose, onCreated }: NewDebtModalProps) {
                             type="text"
                             required
                             value={item.itemName}
-                            onChange={(e) => updateItem(index, { itemName: e.target.value })}
+                            onChange={(e) =>
+                              updateItem(index, { itemName: e.target.value })
+                            }
                             placeholder="Item name"
                             className="px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                           />
@@ -219,19 +239,29 @@ export function NewDebtModal({ onClose, onCreated }: NewDebtModalProps) {
                             min={1}
                             required
                             value={item.quantity}
-                            onChange={(e) => updateItem(index, { quantity: Number(e.target.value) })}
+                            onChange={(e) =>
+                              updateItem(index, {
+                                quantity: Number(e.target.value),
+                              })
+                            }
                             placeholder="Qty"
                             className="px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                           />
                           <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">$</span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                              ₱
+                            </span>{" "}
                             <input
                               type="number"
                               min={0}
                               step="0.01"
                               required
                               value={item.unitPrice}
-                              onChange={(e) => updateItem(index, { unitPrice: Number(e.target.value) })}
+                              onChange={(e) =>
+                                updateItem(index, {
+                                  unitPrice: Number(e.target.value),
+                                })
+                              }
                               placeholder="0.00"
                               className="w-full pl-7 pr-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                             />
@@ -240,7 +270,9 @@ export function NewDebtModal({ onClose, onCreated }: NewDebtModalProps) {
                         <input
                           type="text"
                           value={item.description}
-                          onChange={(e) => updateItem(index, { description: e.target.value })}
+                          onChange={(e) =>
+                            updateItem(index, { description: e.target.value })
+                          }
                           placeholder="Description (optional)"
                           className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                         />
@@ -258,7 +290,10 @@ export function NewDebtModal({ onClose, onCreated }: NewDebtModalProps) {
                     {item.quantity > 0 && item.unitPrice > 0 && (
                       <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-end">
                         <span className="text-xs text-gray-500 dark:text-gray-400">
-                          Subtotal: <span className="font-medium text-gray-700 dark:text-gray-300">{formatCurrency(item.quantity * item.unitPrice)}</span>
+                          Subtotal:{" "}
+                          <span className="font-medium text-gray-700 dark:text-gray-300">
+                            {formatCurrency(item.quantity * item.unitPrice)}
+                          </span>
                         </span>
                       </div>
                     )}
@@ -278,7 +313,9 @@ export function NewDebtModal({ onClose, onCreated }: NewDebtModalProps) {
 
             {/* Total */}
             <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Amount</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Total Amount
+              </span>
               <span className="text-xl font-bold text-gray-900 dark:text-white">
                 {formatCurrency(total)}
               </span>

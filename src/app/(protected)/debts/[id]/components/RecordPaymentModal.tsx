@@ -25,7 +25,7 @@ const paymentMethods: { value: PaymentMethod; label: string }[] = [
 ];
 
 export function RecordPaymentModal({ debt, prefillAmount, prefillItemId, onClose, onUpdated }: RecordPaymentModalProps) {
-  const [amount, setAmount] = useState(() => 
+  const [amount, setAmount] = useState(() =>
     prefillAmount && prefillAmount > 0 ? prefillAmount.toString() : ""
   );
   const [method, setMethod] = useState<PaymentMethod>("CASH");
@@ -51,6 +51,51 @@ export function RecordPaymentModal({ debt, prefillAmount, prefillItemId, onClose
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(value);
+
+  // ─── Real per-item remaining, sourced directly from item.paidAmount ───
+  const itemsWithRemaining = debt.items.map((item) => {
+    const paidForThisItem = item.paidAmount ?? 0;
+    const remaining = Math.max(0, item.totalPrice - paidForThisItem);
+    return {
+      ...item,
+      remaining,
+      isFullyPaid: remaining <= 0,
+    };
+  });
+
+  const unpaidItems = itemsWithRemaining.filter((item) => !item.isFullyPaid);
+  const fullyPaidItems = itemsWithRemaining.filter((item) => item.isFullyPaid);
+
+  const quickAmounts = unpaidItems.slice(0, 4).map((item) => ({
+    id: item.id,
+    label: item.itemName,
+    amount: item.remaining,
+    fullAmount: item.totalPrice,
+    isPartiallyPaid: item.remaining < item.totalPrice,
+  }));
+
+  // "Full Balance" is only offered as a one-tap preset when there's exactly
+  // one unpaid item left — a single ItemPayment can't span multiple items,
+  // so offering it with >1 unpaid item would misattribute the payment.
+  const singleUnpaidItem = unpaidItems.length === 1 ? unpaidItems[0] : null;
+  if (singleUnpaidItem && singleUnpaidItem.remaining === debt.balance) {
+    quickAmounts.push({
+      id: singleUnpaidItem.id,
+      label: "Full Balance",
+      amount: debt.balance,
+      fullAmount: debt.balance,
+      isPartiallyPaid: false,
+    });
+  }
+
+  function handlePresetClick(itemId: string, presetAmount: number) {
+    setSelectedItemId(itemId);
+    setAmount(presetAmount.toString());
+    setError("");
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (loading) return;
@@ -65,12 +110,34 @@ export function RecordPaymentModal({ debt, prefillAmount, prefillItemId, onClose
       return;
     }
 
-    const activeItemId = selectedItemId && selectedItemId !== "prefilled" && selectedItemId !== "full"
-      ? selectedItemId 
-      : debt.items[0]?.id;
+    // Resolve which item this payment applies to.
+    let activeItemId: string | null =
+      selectedItemId && selectedItemId !== "prefilled" ? selectedItemId : null;
 
     if (!activeItemId) {
-      setError("No item selected");
+      if (unpaidItems.length === 1) {
+        // Only one item left to pay — safe to default to it.
+        activeItemId = unpaidItems[0].id;
+      } else if (unpaidItems.length > 1) {
+        setError("Multiple items are unpaid — please select which item this payment is for");
+        return;
+      }
+    }
+
+    if (!activeItemId) {
+      setError("No unpaid item available to apply this payment to");
+      return;
+    }
+
+    const targetItem = itemsWithRemaining.find((i) => i.id === activeItemId);
+    if (!targetItem) {
+      setError("Selected item not found");
+      return;
+    }
+    if (paymentAmount > targetItem.remaining) {
+      setError(
+        `Amount cannot exceed this item's remaining balance of ${formatCurrency(targetItem.remaining)}`
+      );
       return;
     }
 
@@ -97,55 +164,6 @@ export function RecordPaymentModal({ debt, prefillAmount, prefillItemId, onClose
     } finally {
       setLoading(false);
     }
-  }
-
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(value);
-
-  // Calculate remaining per item based on payments made
-  const totalPaid = debt.totalAmount - debt.balance;
-
-  const itemsWithRemaining = debt.items.map((item, index) => {
-    const previousTotal = debt.items
-      .slice(0, index)
-      .reduce((sum, i) => sum + i.totalPrice, 0);
-    const itemStart = previousTotal;
-    
-    const paidForThisItem = Math.max(0, Math.min(totalPaid - itemStart, item.totalPrice));
-    const remaining = item.totalPrice - paidForThisItem;
-
-    return {
-      ...item,
-      remaining,
-      isFullyPaid: remaining <= 0,
-    };
-  });
-
-  const unpaidItems = itemsWithRemaining.filter((item) => !item.isFullyPaid);
-
-  const quickAmounts = unpaidItems
-    .slice(0, 4)
-    .map((item) => ({
-      id: item.id,
-      label: item.itemName,
-      amount: item.remaining,
-      fullAmount: item.totalPrice,
-      isPartiallyPaid: item.remaining < item.totalPrice,
-    }));
-
-  if (unpaidItems.length > 1 || debt.balance > 0) {
-    quickAmounts.push({
-      id: "full",
-      label: "Full Balance",
-      amount: debt.balance,
-      fullAmount: debt.balance,
-      isPartiallyPaid: false,
-    });
-  }
-
-  function handlePresetClick(itemId: string, presetAmount: number) {
-    setSelectedItemId(itemId);
-    setAmount(presetAmount.toString());
   }
 
   return (
@@ -202,6 +220,7 @@ export function RecordPaymentModal({ debt, prefillAmount, prefillItemId, onClose
                 onChange={(e) => {
                   setAmount(e.target.value);
                   setSelectedItemId(null);
+                  setError("");
                 }}
                 placeholder="0.00"
                 className="w-full pl-8 pr-4 py-3 text-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
@@ -214,7 +233,7 @@ export function RecordPaymentModal({ debt, prefillAmount, prefillItemId, onClose
               <div className="flex flex-wrap gap-2 mt-2">
                 {quickAmounts.map((quick) => (
                   <button
-                    key={quick.id}
+                    key={`${quick.id}-${quick.label}`}
                     type="button"
                     onClick={() => handlePresetClick(quick.id, quick.amount)}
                     className={`py-2 px-3 text-left rounded-lg transition-colors relative ${
@@ -239,11 +258,33 @@ export function RecordPaymentModal({ debt, prefillAmount, prefillItemId, onClose
               </div>
             )}
 
+            {/* Manual item picker — shown when multiple items are unpaid and
+                no preset has been selected, so the amount can be attributed
+                correctly instead of guessing. */}
+            {unpaidItems.length > 1 && !selectedItemId && (
+              <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                Multiple items are unpaid — tap one above to apply this payment to it.
+              </p>
+            )}
+
             {/* Show paid items summary */}
-            {itemsWithRemaining.filter(i => i.isFullyPaid).length > 0 && (
-              <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                <Check size={12} className="inline mr-1 text-emerald-500" />
-                {itemsWithRemaining.filter(i => i.isFullyPaid).length} item{itemsWithRemaining.filter(i => i.isFullyPaid).length !== 1 ? 's' : ''} fully paid
+            {fullyPaidItems.length > 0 && (
+              <div className="mt-3 space-y-1">
+                <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                  <Check size={12} className="text-emerald-500" />
+                  {fullyPaidItems.length} item{fullyPaidItems.length !== 1 ? "s" : ""} fully paid
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {fullyPaidItems.map((item) => (
+                    <span
+                      key={item.id}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400"
+                    >
+                      <Check size={10} />
+                      {item.itemName}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
           </div>

@@ -104,8 +104,8 @@ export function EditItemModal({ debt, item, onClose, onUpdated }: EditItemModalP
     }
   }
 
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(value);
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">

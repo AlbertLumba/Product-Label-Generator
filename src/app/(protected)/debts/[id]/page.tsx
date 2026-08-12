@@ -13,16 +13,25 @@ export default async function DebtDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  
+
   const debt = await prisma.debt.findUnique({
     where: { id },
-    include: { items: true, payments: true },
+    include: {
+      items: {
+        include: {
+          payments: {
+            orderBy: { paymentDate: "desc" },
+          },
+        },
+      },
+      payments: {
+        orderBy: { paymentDate: "desc" },
+      },
+    },
   });
 
   if (!debt) notFound();
 
-  // Prisma Decimal fields aren't plain numbers — convert before
-  // passing to client components.
   const formatted: Debt = {
     id: debt.id,
     debtorName: debt.debtorName,
@@ -40,7 +49,15 @@ export default async function DebtDetailPage({
       quantity: item.quantity,
       unitPrice: Number(item.unitPrice),
       totalPrice: Number(item.totalPrice),
+      paidAmount: Number(item.paidAmount),
       purchasedAt: item.purchasedAt,
+      payments: item.payments.map((p) => ({
+        id: p.id,
+        amount: Number(p.amount),
+        paymentDate: p.paymentDate,
+        method: p.method,
+        notes: p.notes,
+      })),
     })),
     payments: debt.payments.map((payment) => ({
       id: payment.id,

@@ -20,7 +20,7 @@ interface DashboardClientProps {
 }
 
 const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+  new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(value);
 
 const formatDate = (value: string | Date) =>
   new Date(value).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });

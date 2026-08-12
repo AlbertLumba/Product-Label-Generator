@@ -2,7 +2,7 @@
 "use client";
 
 import React from "react";
-import { Mail, Key, FileText, Calendar } from "lucide-react";
+import { Mail, Key, FileText, Calendar, Check } from "lucide-react";
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -18,7 +18,15 @@ export interface DebtItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  paidAmount?: number;
   purchasedAt: string | Date;
+  payments?: {
+    id: string;
+    amount: number;
+    paymentDate: string | Date;
+    method: PaymentMethod;
+    notes?: string | null;
+  }[];
 }
 
 export interface Payment {
@@ -78,22 +86,26 @@ const paymentMethodStyles: Record<PaymentMethod, string> = {
 // ─────────────────────────────────────────────
 
 const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+  new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(value);
 
 const formatDate = (value: string | Date) =>
   new Date(value).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 
+function isItemFullyPaid(item: DebtItem): boolean {
+  return (item.paidAmount ?? 0) >= item.totalPrice;
+}
+
 // Group items by date
 function groupItemsByDate(items: DebtItem[]) {
   const groups: Record<string, DebtItem[]> = {};
-  
+
   items.forEach((item) => {
     const dateKey = formatDate(item.purchasedAt);
     if (!groups[dateKey]) groups[dateKey] = [];
     groups[dateKey].push(item);
   });
 
-  return Object.entries(groups).sort((a, b) => 
+  return Object.entries(groups).sort((a, b) =>
     new Date(b[0]).getTime() - new Date(a[0]).getTime()
   );
 }
@@ -154,7 +166,7 @@ export const DebtCard: React.FC<DebtCardProps> = ({
       <div className="px-6 py-4 space-y-4">
         {groupedItems.map(([date, items]) => {
           const dateTotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
-          
+
           return (
             <div key={date} className="bg-gray-50 dark:bg-gray-800/50 rounded-xl overflow-hidden">
               {/* Date header */}
@@ -173,26 +185,41 @@ export const DebtCard: React.FC<DebtCardProps> = ({
 
               {/* Items for this date */}
               <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
-                {items.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between px-4 py-2.5">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm text-gray-900 dark:text-white">
-                        {item.quantity > 1 && (
-                          <span className="text-gray-500 dark:text-gray-400">{item.quantity}× </span>
+                {items.map((item) => {
+                  const itemPaid = isItemFullyPaid(item);
+
+                  return (
+                    <div
+                      key={item.id}
+                      className={`flex items-center justify-between px-4 py-2.5 ${itemPaid ? "opacity-60" : ""}`}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-gray-900 dark:text-white truncate">
+                            {item.quantity > 1 && (
+                              <span className="text-gray-500 dark:text-gray-400">{item.quantity}× </span>
+                            )}
+                            {item.itemName}
+                          </p>
+                          {itemPaid && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 flex-shrink-0">
+                              <Check size={9} />
+                              Paid
+                            </span>
+                          )}
+                        </div>
+                        {item.description && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                            {item.description}
+                          </p>
                         )}
-                        {item.itemName}
-                      </p>
-                      {item.description && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
-                          {item.description}
-                        </p>
-                      )}
+                      </div>
+                      <span className="text-sm text-gray-600 dark:text-gray-300 ml-3 shrink-0">
+                        {formatCurrency(item.totalPrice)}
+                      </span>
                     </div>
-                    <span className="text-sm text-gray-600 dark:text-gray-300 ml-3 shrink-0">
-                      {formatCurrency(item.totalPrice)}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           );

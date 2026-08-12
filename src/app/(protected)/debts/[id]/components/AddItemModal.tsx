@@ -49,11 +49,14 @@ export function AddItemModal({ debt, onClose, onUpdated }: AddItemModalProps) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  const total = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+  const total = items.reduce(
+    (sum, item) => sum + item.quantity * item.unitPrice,
+    0,
+  );
 
   function updateItem(index: number, patch: Partial<ItemRow>) {
     setItems((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, ...patch } : item))
+      prev.map((item, i) => (i === index ? { ...item, ...patch } : item)),
     );
   }
 
@@ -99,19 +102,30 @@ export function AddItemModal({ debt, onClose, onUpdated }: AddItemModalProps) {
   }
 
   const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+    new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
+    }).format(value);
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh]">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
 
       <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden m-4 flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Add Items</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Add Items
+            </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Adding to <span className="font-medium text-gray-700 dark:text-gray-300">{debt.debtorName}</span>
+              Adding to{" "}
+              <span className="font-medium text-gray-700 dark:text-gray-300">
+                {debt.debtorName}
+              </span>
             </p>
           </div>
           <button
@@ -133,7 +147,10 @@ export function AddItemModal({ debt, onClose, onUpdated }: AddItemModalProps) {
 
             <div className="flex flex-col gap-3">
               {items.map((item, index) => (
-                <div key={index} className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                <div
+                  key={index}
+                  className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl p-4"
+                >
                   <div className="flex items-start gap-3">
                     <div className="flex-1 space-y-3">
                       <div className="grid grid-cols-[1fr_80px_100px] gap-3">
@@ -141,7 +158,9 @@ export function AddItemModal({ debt, onClose, onUpdated }: AddItemModalProps) {
                           type="text"
                           required
                           value={item.itemName}
-                          onChange={(e) => updateItem(index, { itemName: e.target.value })}
+                          onChange={(e) =>
+                            updateItem(index, { itemName: e.target.value })
+                          }
                           placeholder="Item name"
                           className="px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                         />
@@ -150,19 +169,29 @@ export function AddItemModal({ debt, onClose, onUpdated }: AddItemModalProps) {
                           min={1}
                           required
                           value={item.quantity}
-                          onChange={(e) => updateItem(index, { quantity: Number(e.target.value) })}
+                          onChange={(e) =>
+                            updateItem(index, {
+                              quantity: Number(e.target.value),
+                            })
+                          }
                           placeholder="Qty"
                           className="px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                         />
                         <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">$</span>
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                            ₱
+                          </span>{" "}
                           <input
                             type="number"
                             min={0}
                             step="0.01"
                             required
                             value={item.unitPrice}
-                            onChange={(e) => updateItem(index, { unitPrice: Number(e.target.value) })}
+                            onChange={(e) =>
+                              updateItem(index, {
+                                unitPrice: Number(e.target.value),
+                              })
+                            }
                             placeholder="0.00"
                             className="w-full pl-7 pr-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                           />
@@ -171,7 +200,9 @@ export function AddItemModal({ debt, onClose, onUpdated }: AddItemModalProps) {
                       <input
                         type="text"
                         value={item.description}
-                        onChange={(e) => updateItem(index, { description: e.target.value })}
+                        onChange={(e) =>
+                          updateItem(index, { description: e.target.value })
+                        }
                         placeholder="Description (optional)"
                         className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                       />
@@ -200,7 +231,9 @@ export function AddItemModal({ debt, onClose, onUpdated }: AddItemModalProps) {
             </button>
 
             <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">New Items Total</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                New Items Total
+              </span>
               <span className="text-lg font-bold text-gray-900 dark:text-white">
                 {formatCurrency(total)}
               </span>

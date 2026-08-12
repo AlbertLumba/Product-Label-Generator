@@ -6,7 +6,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, DollarSign, Calendar, Mail, Key, FileText, ChevronDown, Pencil } from "lucide-react";
+import { ArrowLeft, Plus, DollarSign, Calendar, Mail, Key, FileText, ChevronDown, Pencil, Check } from "lucide-react";
 import { AddItemModal } from "./AddItemModal";
 import { RecordPaymentModal } from "./RecordPaymentModal";
 import { EditItemModal } from "./EditItemModal";
@@ -27,16 +27,20 @@ const formatDate = (value: string | Date) =>
 
 function groupItemsByDate(items: DebtItem[]) {
   const groups: Record<string, DebtItem[]> = {};
-  
+
   items.forEach((item) => {
     const dateKey = formatDate(item.purchasedAt);
     if (!groups[dateKey]) groups[dateKey] = [];
     groups[dateKey].push(item);
   });
 
-  return Object.entries(groups).sort((a, b) => 
+  return Object.entries(groups).sort((a, b) =>
     new Date(b[0]).getTime() - new Date(a[0]).getTime()
   );
+}
+
+function isItemFullyPaid(item: DebtItem): boolean {
+  return (item.paidAmount ?? 0) >= item.totalPrice;
 }
 
 const statusStyles: Record<string, string> = {
@@ -75,8 +79,11 @@ export const DebtDetail: React.FC<DebtDetailProps> = ({ debt }) => {
 
   function handleItemClick(item: DebtItem) {
     if (currentDebt.status !== "ACTIVE") return;
+    if (isItemFullyPaid(item)) return;
+
+    const remaining = item.totalPrice - (item.paidAmount ?? 0);
     setSelectedPaymentItemId(item.id);
-    setPrefillAmount(item.totalPrice);
+    setPrefillAmount(remaining);
     setShowPayment(true);
   }
 
@@ -195,11 +202,11 @@ export const DebtDetail: React.FC<DebtDetailProps> = ({ debt }) => {
         <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
           Purchase History
         </h3>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {groupedItems.map(([date, items]) => {
             const dateTotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
-            
+
             return (
               <div key={date} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
                 {/* Date Header */}
@@ -223,63 +230,76 @@ export const DebtDetail: React.FC<DebtDetailProps> = ({ debt }) => {
                 {/* Items Grid */}
                 <div className="p-3">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {items.map((item) => (
-                      <div
-                        key={item.id}
-                        className={`bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 transition-colors relative group ${
-                          currentDebt.status === "ACTIVE"
-                            ? "cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-950 hover:ring-2 hover:ring-indigo-500/30"
-                            : "cursor-default"
-                        }`}
-                      >
-                        {/* Edit button */}
-                        {currentDebt.status === "ACTIVE" && (
-                          <button
-                            onClick={(e) => handleEditClick(e, item)}
-                            className="absolute top-2 right-2 p-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-100 dark:hover:bg-gray-800 z-10"
-                          >
-                            <Pencil size={12} className="text-gray-500 dark:text-gray-400" />
-                          </button>
-                        )}
+                    {items.map((item) => {
+                      const itemPaid = isItemFullyPaid(item);
+                      const canPay = currentDebt.status === "ACTIVE" && !itemPaid;
 
-                        {/* Item Content */}
-                        <div onClick={() => handleItemClick(item)}>
-                          <div className="flex items-start justify-between mb-1.5">
-                            <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate flex-1 mr-2 pr-6">
-                              {item.itemName}
-                            </h4>
-                            {item.quantity > 1 && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex-shrink-0">
-                                ×{item.quantity}
-                              </span>
-                            )}
-                          </div>
-                          {item.description && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 line-clamp-1">
-                              {item.description}
-                            </p>
+                      return (
+                        <div
+                          key={item.id}
+                          className={`bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 transition-colors relative group ${
+                            canPay
+                              ? "cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-950 hover:ring-2 hover:ring-indigo-500/30"
+                              : "cursor-default"
+                          } ${itemPaid ? "opacity-60" : ""}`}
+                        >
+                          {/* Edit button */}
+                          {currentDebt.status === "ACTIVE" && (
+                            <button
+                              onClick={(e) => handleEditClick(e, item)}
+                              className="absolute top-2 right-2 p-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-100 dark:hover:bg-gray-800 z-10"
+                            >
+                              <Pencil size={12} className="text-gray-500 dark:text-gray-400" />
+                            </button>
                           )}
-                          <div className="flex items-end justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
-                            <p className="text-sm font-bold text-gray-900 dark:text-white">
-                              {formatCurrency(item.totalPrice)}
-                            </p>
-                            {item.quantity > 1 && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {formatCurrency(item.unitPrice)}/ea
+
+                          {/* Item Content */}
+                          <div onClick={() => handleItemClick(item)}>
+                            <div className="flex items-start justify-between mb-1.5">
+                              <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate flex-1 mr-2 pr-6">
+                                {item.itemName}
+                              </h4>
+                              {item.quantity > 1 && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex-shrink-0">
+                                  ×{item.quantity}
+                                </span>
+                              )}
+                            </div>
+                            {item.description && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 line-clamp-1">
+                                {item.description}
                               </p>
                             )}
-                          </div>
-                          {currentDebt.status === "ACTIVE" && (
-                            <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                              <span className="text-xs text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1">
-                                <DollarSign size={11} />
-                                Pay this item
-                              </span>
+                            <div className="flex items-end justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+                              <p className="text-sm font-bold text-gray-900 dark:text-white">
+                                {formatCurrency(item.totalPrice)}
+                              </p>
+                              {item.quantity > 1 && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  {formatCurrency(item.unitPrice)}/ea
+                                </p>
+                              )}
                             </div>
-                          )}
+
+                            {canPay ? (
+                              <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                                <span className="text-xs text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1">
+                                  <DollarSign size={11} />
+                                  Pay this item
+                                </span>
+                              </div>
+                            ) : itemPaid ? (
+                              <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                                  <Check size={11} />
+                                  Fully paid
+                                </span>
+                              </div>
+                            ) : null}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
