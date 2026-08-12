@@ -2,7 +2,7 @@
 "use client";
 
 import React from "react";
-import { Mail, Key, FileText, Calendar, Check } from "lucide-react";
+import { Mail, Key, FileText, Calendar, Check, Tag } from "lucide-react";
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -35,6 +35,13 @@ export interface Payment {
   paymentDate: string | Date;
   method: PaymentMethod;
   notes?: string | null;
+  // Which item this payment was applied to. Optional because debt-level
+  // Payment records historically didn't carry this — callers that build
+  // payments from ItemPayment (which does have an itemId) can populate it,
+  // e.g. the public /track lookup. Callers that don't have it just omit it
+  // and the row renders exactly as before.
+  itemId?: string;
+  itemName?: string;
 }
 
 export interface Debt {
@@ -232,18 +239,33 @@ export const DebtCard: React.FC<DebtCardProps> = ({
           <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
             Payments ({debt.payments.length})
           </h4>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {debt.payments.map((payment) => (
-              <div key={payment.id} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className={`inline-flex px-2 py-0.5 rounded-md text-[11px] font-medium ${paymentMethodStyles[payment.method]}`}>
-                    {paymentMethodLabel[payment.method]}
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {formatDate(payment.paymentDate)}
-                  </span>
+              <div key={payment.id} className="flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-flex px-2 py-0.5 rounded-md text-[11px] font-medium ${paymentMethodStyles[payment.method]}`}>
+                      {paymentMethodLabel[payment.method]}
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {formatDate(payment.paymentDate)}
+                    </span>
+                  </div>
+                  {/* Which item this payment was applied to — e.g. a partial
+                      ("half") payment shows exactly where it went. */}
+                  {payment.itemName && (
+                    <p className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400 mt-1 truncate">
+                      <Tag size={10} className="flex-shrink-0" />
+                      <span className="truncate">{payment.itemName}</span>
+                    </p>
+                  )}
+                  {payment.notes && (
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
+                      {payment.notes}
+                    </p>
+                  )}
                 </div>
-                <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400 flex-shrink-0">
                   {formatCurrency(payment.amount)}
                 </span>
               </div>

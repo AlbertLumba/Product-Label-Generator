@@ -6,6 +6,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { api } from "@/lib/api/client";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -96,6 +97,25 @@ export default function LoginPage() {
               {loading ? "Signing in..." : "Sign in"}
             </Button>
           </form>
+
+          <div className="flex items-center gap-3 my-5">
+            <div className="h-px flex-1 bg-[var(--gw-border,theme(colors.gray.200))] dark:bg-gray-800" />
+            <span className="font-mono text-[11px] uppercase tracking-[0.05em] text-[var(--gw-muted)]">
+              or
+            </span>
+            <div className="h-px flex-1 bg-[var(--gw-border,theme(colors.gray.200))] dark:bg-gray-800" />
+          </div>
+
+          <Link href="/track" className="block">
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              className="w-full !bg-transparent !text-[var(--gw-text)] border border-[var(--gw-text)] hover:!bg-[var(--gw-text)]/10"
+            >
+              Track Your Debt
+            </Button>
+          </Link>
         </Card>
 
         <Alert variant="info" title="Test Account">

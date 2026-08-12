@@ -9,6 +9,7 @@ import { ok, unauthorized, notFound, badRequest } from "@/lib/api/server";
 import { getUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { serializeDebt } from "@/lib/api/debt-serializer";
+import { sendPaymentConfirmationEmail } from "@/lib/email";
 
 const paymentSchema = z.object({
   debtId: z.string().min(1),
@@ -86,6 +87,21 @@ export const POST = apiHandler(async (req) => {
       payments: true,
     },
   });
+
+  // Send payment confirmation email (best-effort — don't fail the request if it errors)
+  if (debt.debtorEmail) {
+    sendPaymentConfirmationEmail({
+      to: debt.debtorEmail,
+      debtorName: debt.debtorName,
+      itemName: item.itemName,
+      amountPaid: amount,
+      method,
+      remainingBalance: newBalance,
+      accessCode: debt.accessCode,
+    }).catch((error) => {
+      console.error("Payment confirmation email failed:", error);
+    });
+  }
 
   return ok(serializeDebt(updated));
 });

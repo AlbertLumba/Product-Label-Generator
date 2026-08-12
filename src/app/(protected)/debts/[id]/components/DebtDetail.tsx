@@ -43,6 +43,11 @@ function isItemFullyPaid(item: DebtItem): boolean {
   return (item.paidAmount ?? 0) >= item.totalPrice;
 }
 
+function isItemPartiallyPaid(item: DebtItem): boolean {
+  const paid = item.paidAmount ?? 0;
+  return paid > 0 && paid < item.totalPrice;
+}
+
 const statusStyles: Record<string, string> = {
   ACTIVE: "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400",
   PAID: "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400",
@@ -232,7 +237,11 @@ export const DebtDetail: React.FC<DebtDetailProps> = ({ debt }) => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {items.map((item) => {
                       const itemPaid = isItemFullyPaid(item);
+                      const itemPartial = isItemPartiallyPaid(item);
                       const canPay = currentDebt.status === "ACTIVE" && !itemPaid;
+                      const paidAmount = item.paidAmount ?? 0;
+                      const remaining = Math.max(0, item.totalPrice - paidAmount);
+                      const paidPct = item.totalPrice > 0 ? Math.min(100, (paidAmount / item.totalPrice) * 100) : 0;
 
                       return (
                         <div
@@ -281,7 +290,27 @@ export const DebtDetail: React.FC<DebtDetailProps> = ({ debt }) => {
                               )}
                             </div>
 
-                            {canPay ? (
+                            {/* Partial payment progress */}
+                            {itemPartial && (
+                              <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                                <div className="flex items-center justify-between text-[11px] mb-1">
+                                  <span className="text-amber-600 dark:text-amber-400 font-medium">
+                                    {formatCurrency(paidAmount)} paid
+                                  </span>
+                                  <span className="text-gray-500 dark:text-gray-400">
+                                    {formatCurrency(remaining)} left
+                                  </span>
+                                </div>
+                                <div className="h-1.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-amber-500 dark:bg-amber-400 rounded-full transition-all"
+                                    style={{ width: `${paidPct}%` }}
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            {canPay && !itemPartial ? (
                               <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                                 <span className="text-xs text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1">
                                   <DollarSign size={11} />

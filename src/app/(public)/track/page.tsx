@@ -72,11 +72,11 @@ export default function TrackPage() {
               className="text-base sm:text-sm"
             />
 
-            <Button 
-              type="submit" 
-              variant="primary" 
-              size="md" 
-              loading={loading} 
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              loading={loading}
               className="w-full py-3 sm:py-2.5"
             >
               {loading ? "Looking up..." : "View My Debt"}
@@ -84,6 +84,9 @@ export default function TrackPage() {
           </form>
         </Card>
 
+        {/* DebtCard now shows, per payment, which item it was applied to
+            (via the itemName field the lookup API attaches) — no separate
+            "Payment History" section needed here anymore. */}
         {debt && <DebtCard debt={debt} />}
       </div>
     </div>

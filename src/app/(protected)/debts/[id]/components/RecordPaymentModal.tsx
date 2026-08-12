@@ -5,7 +5,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, DollarSign, CreditCard, User, Check } from "lucide-react";
+import { X, DollarSign, CreditCard, User, Check, Tag } from "lucide-react";
 import { api } from "@/lib/api/client";
 import type { Debt, PaymentMethod } from "../../components/DebtCard";
 
@@ -68,6 +68,16 @@ export function RecordPaymentModal({ debt, prefillAmount, prefillItemId, onClose
   const unpaidItems = itemsWithRemaining.filter((item) => !item.isFullyPaid);
   const fullyPaidItems = itemsWithRemaining.filter((item) => item.isFullyPaid);
 
+  // ─── Locked mode: the modal was opened by clicking a specific item card.
+  // The target item is fixed — the user is here to pay *that* item, whether
+  // in full or partially. We must NOT clear this selection just because
+  // they edit the amount (that was the bug: typing "70" instead of the
+  // prefilled "100" was wiping out which item the payment was for). ───
+  const lockedItem =
+    prefillItemId != null
+      ? itemsWithRemaining.find((i) => i.id === prefillItemId && !i.isFullyPaid) || null
+      : null;
+
   const quickAmounts = unpaidItems.slice(0, 4).map((item) => ({
     id: item.id,
     label: item.itemName,
@@ -96,6 +106,17 @@ export function RecordPaymentModal({ debt, prefillAmount, prefillItemId, onClose
     setError("");
   }
 
+  function handleAmountChange(value: string) {
+    setAmount(value);
+    setError("");
+    // Only clear the item selection in "pick an item" mode. In locked mode
+    // (opened from a specific item's card) the target item never changes —
+    // the user is just adjusting how much of it they're paying right now.
+    if (!lockedItem) {
+      setSelectedItemId(null);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (loading) return;
@@ -111,8 +132,11 @@ export function RecordPaymentModal({ debt, prefillAmount, prefillItemId, onClose
     }
 
     // Resolve which item this payment applies to.
-    let activeItemId: string | null =
-      selectedItemId && selectedItemId !== "prefilled" ? selectedItemId : null;
+    let activeItemId: string | null = lockedItem
+      ? lockedItem.id
+      : selectedItemId && selectedItemId !== "prefilled"
+        ? selectedItemId
+        : null;
 
     if (!activeItemId) {
       if (unpaidItems.length === 1) {
@@ -166,6 +190,8 @@ export function RecordPaymentModal({ debt, prefillAmount, prefillItemId, onClose
     }
   }
 
+  const amountMax = lockedItem ? lockedItem.remaining : debt.balance;
+
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -202,6 +228,24 @@ export function RecordPaymentModal({ debt, prefillAmount, prefillItemId, onClose
             </div>
           )}
 
+          {/* Locked item banner — shown when opened from a specific item's card */}
+          {lockedItem && (
+            <div className="flex items-center justify-between gap-3 bg-indigo-50 dark:bg-indigo-950 border border-indigo-200 dark:border-indigo-800 rounded-xl px-4 py-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <Tag size={14} className="text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">Paying towards</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                    {lockedItem.itemName}
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs font-medium text-indigo-700 dark:text-indigo-400 flex-shrink-0">
+                {formatCurrency(lockedItem.remaining)} left
+              </span>
+            </div>
+          )}
+
           {/* Amount */}
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -214,22 +258,38 @@ export function RecordPaymentModal({ debt, prefillAmount, prefillItemId, onClose
                 type="number"
                 min={0.01}
                 step="0.01"
-                max={debt.balance}
+                max={amountMax}
                 required
                 value={amount}
-                onChange={(e) => {
-                  setAmount(e.target.value);
-                  setSelectedItemId(null);
-                  setError("");
-                }}
+                onChange={(e) => handleAmountChange(e.target.value)}
                 placeholder="0.00"
                 className="w-full pl-8 pr-4 py-3 text-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 autoFocus
               />
             </div>
 
-            {/* Quick amounts with item names */}
-            {quickAmounts.length > 0 && (
+            {/* Locked mode: quick partial-payment presets for the one target item */}
+            {lockedItem && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={() => handleAmountChange(lockedItem.remaining.toString())}
+                  className="py-2 px-3 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+                >
+                  Pay Full ({formatCurrency(lockedItem.remaining)})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAmountChange((lockedItem.remaining / 2).toFixed(2))}
+                  className="py-2 px-3 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+                >
+                  Pay Half ({formatCurrency(lockedItem.remaining / 2)})
+                </button>
+              </div>
+            )}
+
+            {/* General mode: quick amounts across all unpaid items */}
+            {!lockedItem && quickAmounts.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {quickAmounts.map((quick) => (
                   <button
@@ -258,10 +318,9 @@ export function RecordPaymentModal({ debt, prefillAmount, prefillItemId, onClose
               </div>
             )}
 
-            {/* Manual item picker — shown when multiple items are unpaid and
-                no preset has been selected, so the amount can be attributed
-                correctly instead of guessing. */}
-            {unpaidItems.length > 1 && !selectedItemId && (
+            {/* Manual item picker warning — only relevant in general mode when
+                multiple items are unpaid and no preset has been selected. */}
+            {!lockedItem && unpaidItems.length > 1 && !selectedItemId && (
               <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
                 Multiple items are unpaid — tap one above to apply this payment to it.
               </p>

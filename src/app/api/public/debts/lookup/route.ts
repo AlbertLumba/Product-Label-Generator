@@ -22,12 +22,38 @@ export const POST = apiHandler(async (req) => {
 
   const debt = await prisma.debt.findFirst({
     where: { accessCode },
-    include: { items: true, payments: true },
+    include: {
+      items: {
+        include: {
+          payments: {
+            orderBy: { paymentDate: "desc" },
+          },
+        },
+      },
+    },
   });
 
   if (!debt) {
     return notFound("No debt found for that access code");
   }
+
+  // Flatten item-level payments into a single history list, each tagged
+  // with which item it was applied to. This is the real source of truth
+  // for "what did this payment go towards" — the debt-level Payment model
+  // doesn't carry an itemId, but ItemPayment does.
+  const payments = debt.items
+    .flatMap((item) =>
+      item.payments.map((p) => ({
+        id: p.id,
+        amount: Number(p.amount),
+        paymentDate: p.paymentDate,
+        method: p.method,
+        notes: p.notes,
+        itemId: item.id,
+        itemName: item.itemName,
+      }))
+    )
+    .sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime());
 
   return ok({
     id: debt.id,
@@ -49,12 +75,6 @@ export const POST = apiHandler(async (req) => {
       paidAmount: Number(item.paidAmount),
       purchasedAt: item.purchasedAt,
     })),
-    payments: debt.payments.map((payment) => ({
-      id: payment.id,
-      amount: Number(payment.amount),
-      paymentDate: payment.paymentDate,
-      method: payment.method,
-      notes: payment.notes,
-    })),
+    payments,
   });
 });
