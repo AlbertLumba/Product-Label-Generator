@@ -1,5 +1,4 @@
 // prisma/seed.ts
-import crypto from 'crypto';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
@@ -62,15 +61,19 @@ function groupByName(entries: RawEntry[]): Map<string, RawEntry[]> {
 const usedCodes = new Set<string>();
 
 function generateAccessCode(debtorName: string): string {
-  const prefix = debtorName
-    .replace(/[^a-zA-Z]/g, '')
-    .slice(0, 4)
-    .toUpperCase()
-    .padEnd(4, 'X');
+  const base = debtorName
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toUpperCase();
 
-  for (let attempt = 0; attempt < 20; attempt++) {
-    const suffix = crypto.randomInt(1000, 9999);
-    const code = `${prefix}${suffix}`;
+  if (!usedCodes.has(base)) {
+    usedCodes.add(base);
+    return base;
+  }
+
+  // Same name already used as a code within this seed run —
+  // append an incrementing number, still fully derived from the name.
+  for (let n = 2; n < 100; n++) {
+    const code = `${base}${n}`;
     if (!usedCodes.has(code)) {
       usedCodes.add(code);
       return code;

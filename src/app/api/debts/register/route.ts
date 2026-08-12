@@ -2,7 +2,6 @@
 // 📁 src/app/api/debts/register/route.ts
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-import crypto from "crypto";
 import { z } from "zod";
 import { apiHandler, getBody } from "@/lib/api/handler";
 import { validate } from "@/lib/api/validate";
@@ -30,19 +29,24 @@ const registerDebtSchema = z.object({
 });
 
 async function generateAccessCode(debtorName: string): Promise<string> {
-  const prefix = debtorName
-    .replace(/[^a-zA-Z]/g, "")
-    .slice(0, 4)
-    .toUpperCase()
-    .padEnd(4, "X");
+  const base = debtorName
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .toUpperCase();
 
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const suffix = crypto.randomInt(1000, 9999);
-    const code = `${prefix}${suffix}`;
-    const existing = await prisma.debt.findFirst({
+  // First attempt: the code is just the name itself.
+  const existing = await prisma.debt.findFirst({
+    where: { accessCode: base },
+  });
+  if (!existing) return base;
+
+  // That code is already taken (e.g. this debtor had a prior debt) —
+  // append an incrementing number, still fully derived from the name.
+  for (let n = 2; n < 100; n++) {
+    const code = `${base}${n}`;
+    const clash = await prisma.debt.findFirst({
       where: { accessCode: code },
     });
-    if (!existing) return code;
+    if (!clash) return code;
   }
 
   throw new Error("Could not generate a unique access code");
