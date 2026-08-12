@@ -21,7 +21,7 @@ export default function TrackPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    
+
 
     if (loading) return;
 
@@ -50,7 +50,7 @@ export default function TrackPage() {
       <div className="w-full max-w-md sm:max-w-lg lg:max-w-xl flex flex-col gap-4 sm:gap-6">
         <div className="text-center">
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-            Track Your Debt
+            Track Your Debt & Never Pay
           </h1>
           <p className="mt-1.5 sm:mt-2 text-sm sm:text-base text-gray-500 dark:text-gray-400">
             Enter your access code to view your balance

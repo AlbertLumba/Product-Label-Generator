@@ -52,7 +52,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md flex flex-col gap-6">
         <div className="text-center">
           <h1 className="font-mono text-[24px] tracking-[0.05em] text-[var(--gw-text)]">
-            DEBT TRACKER
+            JASLEND
           </h1>
           <p className="mt-2 font-mono text-[13px] text-[var(--gw-muted)]">
             Sign in to your account
@@ -118,9 +118,7 @@ export default function LoginPage() {
           </Link>
         </Card>
 
-        <Alert variant="info" title="Test Account">
-          admin@example.com / admin123
-        </Alert>
+       
       </div>
     </div>
   );
