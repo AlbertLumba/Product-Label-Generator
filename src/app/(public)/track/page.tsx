@@ -45,7 +45,7 @@ export default function TrackPage() {
     }
   }
 
-  return (
+  return ( 
     <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950 px-4 py-8 sm:py-12">
       <div className="w-full max-w-md sm:max-w-lg lg:max-w-xl flex flex-col gap-4 sm:gap-6">
         <div className="text-center">
