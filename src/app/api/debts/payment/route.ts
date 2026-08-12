@@ -31,8 +31,10 @@ export const POST = apiHandler(async (req) => {
 
   const debt = await prisma.debt.findUnique({ where: { id: debtId } });
   if (!debt) return notFound("Debt not found");
-  if (debt.status !== "ACTIVE") return badRequest("Can only add payments to active debts");
-  if (amount > Number(debt.balance)) return badRequest("Payment exceeds remaining balance");
+  if (debt.status !== "ACTIVE")
+    return badRequest("Can only add payments to active debts");
+  if (amount > Number(debt.balance))
+    return badRequest("Payment exceeds remaining balance");
 
   const item = await prisma.debtItem.findUnique({ where: { id: itemId } });
   if (!item) return notFound("Item not found");
@@ -61,8 +63,14 @@ export const POST = apiHandler(async (req) => {
   const allItems = await prisma.debtItem.findMany({
     where: { debtId },
   });
-  const newTotalAmount = allItems.reduce((sum, i) => sum + Number(i.totalPrice), 0);
-  const newTotalPaid = allItems.reduce((sum, i) => sum + Number(i.paidAmount), 0);
+  const newTotalAmount = allItems.reduce(
+    (sum, i) => sum + Number(i.totalPrice),
+    0,
+  );
+  const newTotalPaid = allItems.reduce(
+    (sum, i) => sum + Number(i.paidAmount),
+    0,
+  );
   const newBalance = newTotalAmount - newTotalPaid;
 
   const updated = await prisma.debt.update({
@@ -87,20 +95,21 @@ export const POST = apiHandler(async (req) => {
       payments: true,
     },
   });
-
-  // Send payment confirmation email (best-effort — don't fail the request if it errors)
+  
   if (debt.debtorEmail) {
-    sendPaymentConfirmationEmail({
-      to: debt.debtorEmail,
-      debtorName: debt.debtorName,
-      itemName: item.itemName,
-      amountPaid: amount,
-      method,
-      remainingBalance: newBalance,
-      accessCode: debt.accessCode,
-    }).catch((error) => {
+    try {
+      await sendPaymentConfirmationEmail({
+        to: debt.debtorEmail,
+        debtorName: debt.debtorName,
+        itemName: item.itemName,
+        amountPaid: amount,
+        method,
+        remainingBalance: newBalance,
+        accessCode: debt.accessCode,
+      });
+    } catch (error) {
       console.error("Payment confirmation email failed:", error);
-    });
+    }
   }
 
   return ok(serializeDebt(updated));
