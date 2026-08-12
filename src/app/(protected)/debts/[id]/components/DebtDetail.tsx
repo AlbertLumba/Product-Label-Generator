@@ -4,9 +4,10 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Plus, DollarSign, Calendar, Mail, Key, FileText, ChevronDown, Pencil, Check } from "lucide-react";
+import { api } from "@/lib/api/client";
 import { AddItemModal } from "./AddItemModal";
 import { RecordPaymentModal } from "./RecordPaymentModal";
 import { EditItemModal } from "./EditItemModal";
@@ -68,6 +69,8 @@ const paymentMethodStyles: Record<PaymentMethod, string> = {
   OTHER: "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400",
 };
 
+const POLL_INTERVAL_MS = 5000;
+
 // ─── Component ─────────────────────────────────────────────────
 
 export const DebtDetail: React.FC<DebtDetailProps> = ({ debt }) => {
@@ -81,6 +84,29 @@ export const DebtDetail: React.FC<DebtDetailProps> = ({ debt }) => {
   const [showEditDebtor, setShowEditDebtor] = useState(false);
 
   const groupedItems = groupItemsByDate(currentDebt.items);
+
+  // Poll for changes made in other sessions/tabs (e.g. a payment recorded
+  // from another device, or an item added elsewhere). Local mutations from
+  // this tab still update instantly via the onUpdated callbacks below —
+  // this just catches changes coming from outside this tab. Any modal
+  // that's currently open is left alone so an in-progress edit doesn't get
+  // silently overwritten mid-type.
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (showAddItem || showPayment || editingItem || showEditDebtor) return;
+
+      try {
+        const res = await api.get<Debt>(`/api/debts/fetch?id=${debt.id}`);
+        if (res.success && res.data) {
+          setCurrentDebt(res.data);
+        }
+      } catch {
+        // ignore — will retry on next tick
+      }
+    }, POLL_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, [debt.id, showAddItem, showPayment, editingItem, showEditDebtor]);
 
   function handleItemClick(item: DebtItem) {
     if (currentDebt.status !== "ACTIVE") return;

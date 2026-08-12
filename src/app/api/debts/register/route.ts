@@ -36,9 +36,7 @@ async function generateAccessCode(debtorName: string): Promise<string> {
   });
   if (existingDebt) return existingDebt.accessCode;
 
-  const base = debtorName
-    .replace(/[^a-zA-Z0-9]/g, "")
-    .toUpperCase();
+  const base = debtorName.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
 
   // First attempt: the code is just the name itself.
   const clash = await prisma.debt.findFirst({
@@ -80,17 +78,26 @@ export const POST = apiHandler(async (req) => {
     0,
   );
 
-  // Check for existing active debt for same debtor
+  // Merge into the same debt for this debtor whenever one exists that isn't
+  // CANCELLED — ACTIVE debts just get the new items added; PAID debts flip
+  // back to ACTIVE once the new balance lands. Only when no ACTIVE/PAID
+  // debt exists for this name (brand new debtor, or their prior debt was
+  // CANCELLED) do we create a fresh Debt row.
   const existing = await prisma.debt.findFirst({
-    where: { debtorName, status: "ACTIVE" },
+    where: { debtorName, status: { in: ["ACTIVE", "PAID"] } },
   });
 
   if (existing) {
+    const newTotalAmount = Number(existing.totalAmount) + newItemsTotal;
+    const newBalance = Number(existing.balance) + newItemsTotal;
+    const newStatus = newBalance > 0 ? "ACTIVE" : "PAID";
+
     const updated = await prisma.debt.update({
       where: { id: existing.id },
       data: {
-        totalAmount: Number(existing.totalAmount) + newItemsTotal,
-        balance: Number(existing.balance) + newItemsTotal,
+        totalAmount: newTotalAmount,
+        balance: newBalance,
+        status: newStatus,
         debtorEmail: debtorEmail || existing.debtorEmail,
         notes: notes || existing.notes,
         items: { create: itemsWithTotals },

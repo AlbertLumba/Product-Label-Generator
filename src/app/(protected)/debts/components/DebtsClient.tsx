@@ -4,8 +4,9 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Receipt } from "lucide-react";
+import { api } from "@/lib/api/client";
 import { DebtsList } from "./DebtsList";
 import { NewDebtModal } from "./NewDebtModal";
 import type { Debt } from "./DebtCard";
@@ -13,6 +14,8 @@ import type { Debt } from "./DebtCard";
 interface DebtsClientProps {
   initialDebts: Debt[];
 }
+
+const POLL_INTERVAL_MS = 5000;
 
 export function DebtsClient({ initialDebts }: DebtsClientProps) {
   const [debts, setDebts] = useState<Debt[]>(initialDebts);
@@ -22,6 +25,24 @@ export function DebtsClient({ initialDebts }: DebtsClientProps) {
     setDebts((prev) => [debt, ...prev]);
     setShowModal(false);
   }
+
+  // Lightweight polling so changes from other sessions/tabs show up without
+  // a manual page refresh. Silent on failure — keeps showing the last known
+  // list rather than flashing an error on a transient network blip.
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await api.get<Debt[]>("/api/debts/fetch");
+        if (res.success && res.data) {
+          setDebts(res.data);
+        }
+      } catch {
+        // ignore — will retry on next tick
+      }
+    }, POLL_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="flex flex-col gap-6">
