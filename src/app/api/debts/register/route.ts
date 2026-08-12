@@ -29,24 +29,31 @@ const registerDebtSchema = z.object({
 });
 
 async function generateAccessCode(debtorName: string): Promise<string> {
+  // Reuse the existing code if this debtor already has one, regardless of debt status
+  const existingDebt = await prisma.debt.findFirst({
+    where: { debtorName },
+    select: { accessCode: true },
+  });
+  if (existingDebt) return existingDebt.accessCode;
+
   const base = debtorName
     .replace(/[^a-zA-Z0-9]/g, "")
     .toUpperCase();
 
   // First attempt: the code is just the name itself.
-  const existing = await prisma.debt.findFirst({
+  const clash = await prisma.debt.findFirst({
     where: { accessCode: base },
   });
-  if (!existing) return base;
+  if (!clash) return base;
 
-  // That code is already taken (e.g. this debtor had a prior debt) —
+  // Someone else already has this exact code (different name, same normalized form) —
   // append an incrementing number, still fully derived from the name.
   for (let n = 2; n < 100; n++) {
     const code = `${base}${n}`;
-    const clash = await prisma.debt.findFirst({
+    const collision = await prisma.debt.findFirst({
       where: { accessCode: code },
     });
-    if (!clash) return code;
+    if (!collision) return code;
   }
 
   throw new Error("Could not generate a unique access code");
