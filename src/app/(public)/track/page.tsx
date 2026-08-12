@@ -21,6 +21,7 @@ export default function TrackPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    
 
     if (loading) return;
 
