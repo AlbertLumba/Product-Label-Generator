@@ -249,6 +249,7 @@ export const DebtDetail: React.FC<DebtDetailProps> = ({ debt }) => {
 
                       return (
                         <div
+                        
                           key={item.id}
                           className={`bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 transition-colors relative group ${
                             canPay
