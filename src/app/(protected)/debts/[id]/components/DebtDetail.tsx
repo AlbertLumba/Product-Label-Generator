@@ -117,26 +117,30 @@ export const DebtDetail: React.FC<DebtDetailProps> = ({ debt }) => {
           </Link>
           <div className="flex items-center gap-3">
             {currentDebt.status === "ACTIVE" && (
-              <>
-                <button
-                  onClick={() => {
-                    setSelectedPaymentItemId(null);
-                    setPrefillAmount(null);
-                    setShowPayment(true);
-                  }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition-colors"
-                >
-                  <DollarSign size={15} />
-                  Payment
-                </button>
-                <button
-                  onClick={() => setShowAddItem(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors"
-                >
-                  <Plus size={15} />
-                  Add Item
-                </button>
-              </>
+              <button
+                onClick={() => {
+                  setSelectedPaymentItemId(null);
+                  setPrefillAmount(null);
+                  setShowPayment(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                <DollarSign size={15} />
+                Payment
+              </button>
+            )}
+            {/* Adding items is allowed on PAID debts too — e.g. the debtor
+                comes back for a new purchase. Once the new item's balance
+                lands, the debt flips back to ACTIVE (handled server-side).
+                CANCELLED debts stay locked. */}
+            {(currentDebt.status === "ACTIVE" || currentDebt.status === "PAID") && (
+              <button
+                onClick={() => setShowAddItem(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                <Plus size={15} />
+                Add Item
+              </button>
             )}
           </div>
         </div>
