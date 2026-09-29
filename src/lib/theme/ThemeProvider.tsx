@@ -1,4 +1,5 @@
-// 📁 src/lib/theme/ThemeProvider.tsx
+// src/lib/theme/ThemeProvider.tsx
+
 "use client";
 
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
@@ -18,7 +19,7 @@ const ThemeContext = createContext<ThemeContextType>({
 });
 
 function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "light";
+  if (typeof window === "undefined") return "dark";
   const stored = localStorage.getItem("theme") as Theme | null;
   if (stored === "dark" || stored === "light") return stored;
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
@@ -29,12 +30,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
+    document.documentElement.classList.toggle("light", theme === "light");
   }, [theme]);
 
   const toggleTheme = useCallback(() => {

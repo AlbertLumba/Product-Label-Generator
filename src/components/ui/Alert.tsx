@@ -4,6 +4,10 @@
 
 import React from "react";
 
+// ─────────────────────────────────────────────
+// ALERT
+// ─────────────────────────────────────────────
+
 export type AlertVariant = "success" | "warning" | "error" | "info";
 
 export interface AlertProps {

@@ -18,21 +18,21 @@ export interface BadgeProps {
 }
 
 const badgeVariants: Record<BadgeVariant, string> = {
-  green:   "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800",
-  cyan:    "bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-800",
-  amber:   "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800",
-  red:     "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800",
-  muted:   "bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700",
-  outline: "bg-transparent text-gray-600 border-gray-300 dark:text-gray-400 dark:border-gray-600",
+  green:   "bg-[var(--gw-fern-bg)] text-[var(--gw-fern-text)] border-[var(--gw-fern-dim)]",
+  cyan:    "bg-[var(--gw-cyan-bg)] text-[var(--gw-cyan)] border-[var(--gw-cyan-dim)]",
+  amber:   "bg-[var(--gw-amber-bg)] text-[var(--gw-amber)] border-[var(--gw-amber-dim)]",
+  red:     "bg-[var(--gw-red-bg)] text-[var(--gw-red)] border-[var(--gw-red-dim)]",
+  muted:   "bg-[var(--gw-bg3)] text-[var(--gw-muted)] border-[var(--gw-border)]",
+  outline: "bg-transparent text-[var(--gw-sub)] border-[var(--gw-border-hi)]",
 };
 
 const dotColors: Record<BadgeVariant, string> = {
-  green:   "bg-green-600 dark:bg-green-400",
-  cyan:    "bg-cyan-600 dark:bg-cyan-400",
-  amber:   "bg-amber-600 dark:bg-amber-400",
-  red:     "bg-red-600 dark:bg-red-400",
-  muted:   "bg-gray-400 dark:bg-gray-500",
-  outline: "bg-gray-400 dark:bg-gray-500",
+  green:   "bg-[var(--gw-fern-text)]",
+  cyan:    "bg-[var(--gw-cyan)]",
+  amber:   "bg-[var(--gw-amber)]",
+  red:     "bg-[var(--gw-red)]",
+  muted:   "bg-[var(--gw-muted)]",
+  outline: "bg-[var(--gw-muted)]",
 };
 
 export const Badge: React.FC<BadgeProps> = ({

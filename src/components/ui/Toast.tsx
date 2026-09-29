@@ -39,6 +39,7 @@ interface ToastContextValue {
   error: (title: string, description?: string, duration?: number) => void;
   warning: (title: string, description?: string, duration?: number) => void;
   info: (title: string, description?: string, duration?: number) => void;
+  review: (title: string, description?: string, duration?: number) => void;
 }
 
 // ─────────────────────────────────────────────
@@ -98,7 +99,6 @@ type DismissMode = "swipe" | "collapse";
 
 interface ToastItemProps {
   toast: Toast;
-  /** 0 = newest/foreground, higher = older/behind */
   stackIndex: number;
   onDismiss: (mode: DismissMode) => void;
 }
@@ -110,12 +110,10 @@ const ToastItem: React.FC<ToastItemProps> = ({
 }) => {
   const v = VARIANTS[toast.variant];
 
-  // ── Lifecycle state ──────────────────────────────
   const [phase, setPhase] = useState<
     "entering" | "idle" | "exiting-swipe" | "exiting-collapse"
   >("entering");
 
-  // Progress bar (0–1, counts down from 1)
   const [progress, setProgress] = useState(1);
 
   const rafRef = useRef<number | null>(null);
@@ -129,7 +127,6 @@ const ToastItem: React.FC<ToastItemProps> = ({
     durationRef.current = duration;
   }, [duration]);
 
-  // ── Enter animation ──────────────────────────────
   useEffect(() => {
     const id = requestAnimationFrame(() => {
       requestAnimationFrame(() => setPhase("idle"));
@@ -137,7 +134,6 @@ const ToastItem: React.FC<ToastItemProps> = ({
     return () => cancelAnimationFrame(id);
   }, []);
 
-  // ── Progress timer ───────────────────────────────
   const tick = useCallback((now: number) => {
     if (pausedRef.current) {
       startRef.current = now;
@@ -165,7 +161,6 @@ const ToastItem: React.FC<ToastItemProps> = ({
     };
   }, [phase, duration, tick]);
 
-  // ── Exit triggers ────────────────────────────────
   useEffect(() => {
     if (phase === "exiting-swipe" || phase === "exiting-collapse") {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -180,7 +175,6 @@ const ToastItem: React.FC<ToastItemProps> = ({
 
   const handleDismiss = () => setPhase("exiting-swipe");
 
-  // ── Stack visual state (Top-Right positioning) ──
   const isExiting = phase === "exiting-swipe" || phase === "exiting-collapse";
   const isEntering = phase === "entering";
 
@@ -242,7 +236,6 @@ const ToastItem: React.FC<ToastItemProps> = ({
         startRef.current = performance.now();
       }}
     >
-      {/* Card */}
       <div
         className={`flex gap-2.5 items-start px-3.5 py-3 border rounded-[4px] ${v.wrap}`}
       >
@@ -272,7 +265,6 @@ const ToastItem: React.FC<ToastItemProps> = ({
           <X size={12} />
         </button>
 
-        {/* Progress bar */}
         {duration > 0 && (
           <div
             className={`absolute bottom-0 left-0 h-[2px] rounded-bl-[4px] ${v.progress} transition-none`}
@@ -327,10 +319,15 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
       addToast({ title, description, variant: "info", duration }),
     [addToast],
   );
+  const review = useCallback(
+    (title: string, description?: string, duration = DEFAULT_DURATION) =>
+      addToast({ title, description, variant: "info", duration }),
+    [addToast],
+  );
 
   return (
     <ToastContext.Provider
-      value={{ addToast, removeToast, success, error, warning, info }}
+      value={{ addToast, removeToast, success, error, warning, info, review }}
     >
       {children}
       <ToastContainer toasts={toasts} onRemove={removeToast} />

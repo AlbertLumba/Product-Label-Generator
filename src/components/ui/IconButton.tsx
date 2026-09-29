@@ -26,6 +26,8 @@ const buttonVariants: Record<ButtonVariant, string> = {
     "bg-transparent border-transparent text-[var(--gw-sub)] hover:text-[var(--gw-text)] hover:bg-[var(--gw-bg3)]",
   danger: "bg-transparent border-[var(--gw-red-dim)] text-[var(--gw-red)] hover:bg-[var(--gw-red-bg)]",
   cyan: "bg-transparent border-[var(--gw-cyan-dim)] text-[var(--gw-cyan)] hover:bg-[var(--gw-cyan-bg)]",
+  approve: "bg-[var(--gw-fern)] border-[var(--gw-fern-hi)] text-white hover:bg-[var(--gw-fern-hi)]",
+  reject: "bg-transparent border-[var(--gw-red-dim)] text-[var(--gw-red)] hover:bg-[var(--gw-red-bg)]",
 };
 
 const padSizes: Record<ButtonSize, string> = {

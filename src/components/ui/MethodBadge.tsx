@@ -5,28 +5,49 @@
 import React from "react";
 
 // ─────────────────────────────────────────────
-// HTTP METHOD BADGE
+// STATUS BADGE — task lifecycle for daily review workflow
 // ─────────────────────────────────────────────
 
-export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS";
+export type TaskStatus =
+  | "DRAFT"
+  | "SUBMITTED"
+  | "IN_REVIEW"
+  | "APPROVED"
+  | "REJECTED"
+  | "BLOCKED"
+  | "OVERDUE";
 
 export interface MethodBadgeProps {
-  method: HttpMethod;
+  status: TaskStatus;
 }
 
-const methodStyles: Record<HttpMethod, string> = {
-  GET:     "bg-[#001F3A] text-[#5BA4F5] border-[#0A3A6A]",
-  POST:    "bg-[var(--gw-fern-bg)] text-[var(--gw-fern-text)] border-[var(--gw-fern-dim)]",
-  PUT:     "bg-[var(--gw-amber-bg)] text-[var(--gw-amber)] border-[var(--gw-amber-dim)]",
-  PATCH:   "bg-[var(--gw-amber-bg)] text-[var(--gw-amber)] border-[var(--gw-amber-dim)]",
-  DELETE:  "bg-[var(--gw-red-bg)] text-[var(--gw-red)] border-[var(--gw-red-dim)]",
-  OPTIONS: "bg-[var(--gw-bg3)] text-[var(--gw-sub)] border-[var(--gw-border)]",
+const statusStyles: Record<TaskStatus, string> = {
+  DRAFT:     "bg-[var(--gw-bg3)]       text-[var(--gw-muted)]     border-[var(--gw-border)]",
+  SUBMITTED: "bg-[var(--gw-cyan-bg)]   text-[var(--gw-cyan)]      border-[var(--gw-cyan-dim)]",
+  IN_REVIEW: "bg-[var(--gw-amber-bg)]  text-[var(--gw-amber)]     border-[var(--gw-amber-dim)]",
+  APPROVED:  "bg-[var(--gw-fern-bg)]   text-[var(--gw-fern-text)] border-[var(--gw-fern-dim)]",
+  REJECTED:  "bg-[var(--gw-red-bg)]    text-[var(--gw-red)]       border-[var(--gw-red-dim)]",
+  BLOCKED:   "bg-[var(--gw-amber-bg)]  text-[var(--gw-amber)]     border-[var(--gw-amber-dim)]",
+  OVERDUE:   "bg-[var(--gw-red-bg)]    text-[var(--gw-red)]       border-[var(--gw-red-dim)]",
 };
 
-export const MethodBadge: React.FC<MethodBadgeProps> = ({ method }) => (
+const statusLabels: Record<TaskStatus, string> = {
+  DRAFT:     "Draft",
+  SUBMITTED: "Submitted",
+  IN_REVIEW: "In Review",
+  APPROVED:  "Approved",
+  REJECTED:  "Rejected",
+  BLOCKED:   "Blocked",
+  OVERDUE:   "Overdue",
+};
+
+export const MethodBadge: React.FC<MethodBadgeProps> = ({ status }) => (
   <span
-    className={`font-mono text-[10px] tracking-[0.1em] px-1.5 py-0.5 rounded-[3px] border ${methodStyles[method]}`}
+    className={`font-mono text-[10px] tracking-[0.1em] uppercase px-1.5 py-0.5 rounded-[3px] border ${statusStyles[status]}`}
   >
-    {method}
+    {statusLabels[status]}
   </span>
 );
+
+// Alias for clarity — same component, better name for the domain
+export const StatusBadge = MethodBadge;
