@@ -21,13 +21,6 @@ import { Divider } from "@/components/ui/Divider";
 import { useToast } from "@/components/ui/Toast";
 import type { SessionUser } from "@/lib/auth";
 
-const formatDate = (v: string | Date) =>
-  new Date(v).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-
 export function SettingsClient({ user }: { user: SessionUser }) {
   const toast = useToast();
 
@@ -106,13 +99,13 @@ export function SettingsClient({ user }: { user: SessionUser }) {
   const isAdmin = user.role === "ADMIN";
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col gap-5">
+    <div className="max-w-3xl flex flex-col gap-5">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-950 rounded-xl flex items-center justify-center">
+        <div className="w-10 h-10 bg-[var(--gw-fern-bg)] border border-[var(--gw-fern-dim)] rounded-xl flex items-center justify-center">
           <SettingsIcon
             size={18}
-            className="text-indigo-600 dark:text-indigo-400"
+            className="text-[var(--gw-fern-text)]"
           />
         </div>
         <div>
@@ -135,7 +128,7 @@ export function SettingsClient({ user }: { user: SessionUser }) {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-950 flex items-center justify-center font-mono text-[16px] font-semibold text-indigo-700 dark:text-indigo-300 flex-shrink-0">
+          <div className="w-12 h-12 rounded-full bg-[var(--gw-fern-bg)] border border-[var(--gw-fern-dim)] flex items-center justify-center font-mono text-[16px] font-semibold text-[var(--gw-fern-text)] flex-shrink-0">
             {user.name.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">

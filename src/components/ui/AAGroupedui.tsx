@@ -1,6 +1,8 @@
 // // src/components/ui/AAGroupedui.tsx
 
-// // src/components/ui/Alert.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// // 📁 src/components/ui/Alert.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // "use client";
 
@@ -78,7 +80,9 @@
 //   );
 // };
 
-// // src/components/ui/Badge.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// // 📁 src/components/ui/Badge.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // "use client";
 
@@ -98,21 +102,21 @@
 // }
 
 // const badgeVariants: Record<BadgeVariant, string> = {
-//   green:   "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800",
-//   cyan:    "bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-800",
-//   amber:   "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800",
-//   red:     "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800",
-//   muted:   "bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700",
-//   outline: "bg-transparent text-gray-600 border-gray-300 dark:text-gray-400 dark:border-gray-600",
+//   green:   "bg-[var(--gw-fern-bg)] text-[var(--gw-fern-text)] border-[var(--gw-fern-dim)]",
+//   cyan:    "bg-[var(--gw-cyan-bg)] text-[var(--gw-cyan)] border-[var(--gw-cyan-dim)]",
+//   amber:   "bg-[var(--gw-amber-bg)] text-[var(--gw-amber)] border-[var(--gw-amber-dim)]",
+//   red:     "bg-[var(--gw-red-bg)] text-[var(--gw-red)] border-[var(--gw-red-dim)]",
+//   muted:   "bg-[var(--gw-bg3)] text-[var(--gw-muted)] border-[var(--gw-border)]",
+//   outline: "bg-transparent text-[var(--gw-sub)] border-[var(--gw-border-hi)]",
 // };
 
 // const dotColors: Record<BadgeVariant, string> = {
-//   green:   "bg-green-600 dark:bg-green-400",
-//   cyan:    "bg-cyan-600 dark:bg-cyan-400",
-//   amber:   "bg-amber-600 dark:bg-amber-400",
-//   red:     "bg-red-600 dark:bg-red-400",
-//   muted:   "bg-gray-400 dark:bg-gray-500",
-//   outline: "bg-gray-400 dark:bg-gray-500",
+//   green:   "bg-[var(--gw-fern-text)]",
+//   cyan:    "bg-[var(--gw-cyan)]",
+//   amber:   "bg-[var(--gw-amber)]",
+//   red:     "bg-[var(--gw-red)]",
+//   muted:   "bg-[var(--gw-muted)]",
+//   outline: "bg-[var(--gw-muted)]",
 // };
 
 // export const Badge: React.FC<BadgeProps> = ({
@@ -133,7 +137,9 @@
 //   );
 // };
 
-// // src/components/ui/Button.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// // 📁 src/components/ui/Button.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // "use client";
 
@@ -143,7 +149,15 @@
 // // BUTTON
 // // ─────────────────────────────────────────────
 
-// export type ButtonVariant = "primary" | "outline" | "ghost" | "danger" | "cyan";
+// export type ButtonVariant =
+//   | "primary"
+//   | "outline"
+//   | "ghost"
+//   | "danger"
+//   | "cyan"
+//   | "approve"
+//   | "reject";
+
 // export type ButtonSize = "sm" | "md" | "lg";
 
 // export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -168,6 +182,10 @@
 //     "bg-transparent border-[var(--gw-red-dim)] text-[var(--gw-red)] hover:bg-[var(--gw-red-bg)]",
 //   cyan:
 //     "bg-transparent border-[var(--gw-cyan-dim)] text-[var(--gw-cyan)] hover:bg-[var(--gw-cyan-bg)]",
+//   approve:
+//     "bg-[var(--gw-fern)] border-[var(--gw-fern-hi)] text-white hover:bg-[var(--gw-fern-hi)]",
+//   reject:
+//     "bg-transparent border-[var(--gw-red-dim)] text-[var(--gw-red)] hover:bg-[var(--gw-red-bg)]",
 // };
 
 // const buttonSizes: Record<ButtonSize, string> = {
@@ -210,30 +228,65 @@
 // );
 // Button.displayName = "Button";
 
-// // src/components/ui/Card.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// // 📁 src/components/ui/Card.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // "use client";
 
 // import React from "react";
 
+// // ─────────────────────────────────────────────
+// // CARD
+// // ─────────────────────────────────────────────
+
+// export type CardAccent = "none" | "green" | "cyan" | "amber" | "red" | "muted";
+
 // export interface CardProps {
 //   children: React.ReactNode;
 //   className?: string;
 //   onClick?: () => void;
+//   /** Left-edge accent stripe — useful for task status */
+//   accent?: CardAccent;
+//   /** Subtle ring, e.g. when a lead has the task open */
+//   active?: boolean;
 // }
 
-// export const Card: React.FC<CardProps> = ({ children, className = "", onClick }) => {
+// const accentStyles: Record<CardAccent, string> = {
+//   none:  "",
+//   green: "border-l-2 border-l-[var(--gw-fern)]",
+//   cyan:  "border-l-2 border-l-[var(--gw-cyan)]",
+//   amber: "border-l-2 border-l-[var(--gw-amber)]",
+//   red:   "border-l-2 border-l-[var(--gw-red)]",
+//   muted: "border-l-2 border-l-[var(--gw-border-hi)]",
+// };
+
+// export const Card: React.FC<CardProps> = ({
+//   children,
+//   className = "",
+//   onClick,
+//   accent = "none",
+//   active = false,
+// }) => {
 //   return (
 //     <div
-//       className={`bg-[var(--gw-bg1)] border border-[var(--gw-border)] rounded-xl ${className}`}
 //       onClick={onClick}
+//       className={`
+//         bg-[var(--gw-bg1)] border border-[var(--gw-border)] rounded-xl
+//         ${accentStyles[accent]}
+//         ${active ? "ring-1 ring-[var(--gw-amber-dim)]" : ""}
+//         ${onClick ? "cursor-pointer transition-colors duration-150 hover:border-[var(--gw-border-hi)] hover:bg-[var(--gw-bg2)]" : ""}
+//         ${className}
+//       `}
 //     >
 //       {children}
 //     </div>
 //   );
 // };
 
-// // src/components/ui/CheckBox.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// // 📁 src/components/ui/CheckBox.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // "use client";
 
@@ -278,7 +331,9 @@
 // );
 // Checkbox.displayName = "Checkbox";
 
-// // src/components/ui/CodeBlock.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// // 📁 src/components/ui/CodeBlock.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // "use client";
 
@@ -343,7 +398,9 @@
 //   );
 // };
 
-// // src/components/ui/Divider.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// // 📁 src/components/ui/Divider.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // "use client";
 
@@ -370,7 +427,9 @@
 //   </div>
 // );
 
-// // src/components/ui/IconButton.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// // 📁 src/components/ui/IconButton.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // "use client";
 
@@ -398,6 +457,8 @@
 //     "bg-transparent border-transparent text-[var(--gw-sub)] hover:text-[var(--gw-text)] hover:bg-[var(--gw-bg3)]",
 //   danger: "bg-transparent border-[var(--gw-red-dim)] text-[var(--gw-red)] hover:bg-[var(--gw-red-bg)]",
 //   cyan: "bg-transparent border-[var(--gw-cyan-dim)] text-[var(--gw-cyan)] hover:bg-[var(--gw-cyan-bg)]",
+//   approve: "bg-[var(--gw-fern)] border-[var(--gw-fern-hi)] text-white hover:bg-[var(--gw-fern-hi)]",
+//   reject: "bg-transparent border-[var(--gw-red-dim)] text-[var(--gw-red)] hover:bg-[var(--gw-red-bg)]",
 // };
 
 // const padSizes: Record<ButtonSize, string> = {
@@ -421,8 +482,9 @@
 // );
 // IconButton.displayName = "IconButton";
 
-
-// // src/components/ui/Input.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// // 📁 src/components/ui/Input.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // "use client";
 
@@ -514,40 +576,65 @@
 // );
 // Input.displayName = "Input";
 
-// // src/components/ui/MethodBadge.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// // 📁 src/components/ui/MethodBadge.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // "use client";
 
 // import React from "react";
 
 // // ─────────────────────────────────────────────
-// // HTTP METHOD BADGE
+// // STATUS BADGE — task lifecycle for daily review workflow
 // // ─────────────────────────────────────────────
 
-// export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS";
+// export type TaskStatus =
+//   | "DRAFT"
+//   | "SUBMITTED"
+//   | "IN_REVIEW"
+//   | "APPROVED"
+//   | "REJECTED"
+//   | "BLOCKED"
+//   | "OVERDUE";
 
 // export interface MethodBadgeProps {
-//   method: HttpMethod;
+//   status: TaskStatus;
 // }
 
-// const methodStyles: Record<HttpMethod, string> = {
-//   GET:     "bg-[#001F3A] text-[#5BA4F5] border-[#0A3A6A]",
-//   POST:    "bg-[var(--gw-fern-bg)] text-[var(--gw-fern-text)] border-[var(--gw-fern-dim)]",
-//   PUT:     "bg-[var(--gw-amber-bg)] text-[var(--gw-amber)] border-[var(--gw-amber-dim)]",
-//   PATCH:   "bg-[var(--gw-amber-bg)] text-[var(--gw-amber)] border-[var(--gw-amber-dim)]",
-//   DELETE:  "bg-[var(--gw-red-bg)] text-[var(--gw-red)] border-[var(--gw-red-dim)]",
-//   OPTIONS: "bg-[var(--gw-bg3)] text-[var(--gw-sub)] border-[var(--gw-border)]",
+// const statusStyles: Record<TaskStatus, string> = {
+//   DRAFT:     "bg-[var(--gw-bg3)]       text-[var(--gw-muted)]     border-[var(--gw-border)]",
+//   SUBMITTED: "bg-[var(--gw-cyan-bg)]   text-[var(--gw-cyan)]      border-[var(--gw-cyan-dim)]",
+//   IN_REVIEW: "bg-[var(--gw-amber-bg)]  text-[var(--gw-amber)]     border-[var(--gw-amber-dim)]",
+//   APPROVED:  "bg-[var(--gw-fern-bg)]   text-[var(--gw-fern-text)] border-[var(--gw-fern-dim)]",
+//   REJECTED:  "bg-[var(--gw-red-bg)]    text-[var(--gw-red)]       border-[var(--gw-red-dim)]",
+//   BLOCKED:   "bg-[var(--gw-amber-bg)]  text-[var(--gw-amber)]     border-[var(--gw-amber-dim)]",
+//   OVERDUE:   "bg-[var(--gw-red-bg)]    text-[var(--gw-red)]       border-[var(--gw-red-dim)]",
 // };
 
-// export const MethodBadge: React.FC<MethodBadgeProps> = ({ method }) => (
+// const statusLabels: Record<TaskStatus, string> = {
+//   DRAFT:     "Draft",
+//   SUBMITTED: "Submitted",
+//   IN_REVIEW: "In Review",
+//   APPROVED:  "Approved",
+//   REJECTED:  "Rejected",
+//   BLOCKED:   "Blocked",
+//   OVERDUE:   "Overdue",
+// };
+
+// export const MethodBadge: React.FC<MethodBadgeProps> = ({ status }) => (
 //   <span
-//     className={`font-mono text-[10px] tracking-[0.1em] px-1.5 py-0.5 rounded-[3px] border ${methodStyles[method]}`}
+//     className={`font-mono text-[10px] tracking-[0.1em] uppercase px-1.5 py-0.5 rounded-[3px] border ${statusStyles[status]}`}
 //   >
-//     {method}
+//     {statusLabels[status]}
 //   </span>
 // );
 
-// // src/components/ui/Radio.tsx
+// // Alias for clarity — same component, better name for the domain
+// export const StatusBadge = MethodBadge;
+
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// // 📁 src/components/ui/Radio.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // "use client";
 
@@ -586,7 +673,9 @@
 // );
 // Radio.displayName = "Radio";
 
-// // src/components/ui/Select.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// // 📁 src/components/ui/Select.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // "use client";
 
@@ -638,7 +727,70 @@
 // );
 // Select.displayName = "Select";
 
-// // src/components/ui/TextArea.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// // 📁 src/components/ui/Skeleton.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// "use client";
+
+// import React from "react";
+
+// interface SkeletonProps {
+//   className?: string;
+//   width?: string | number;
+//   height?: string | number;
+//   rounded?: "sm" | "md" | "lg" | "full";
+// }
+
+// const radius = {
+//   sm: "rounded-[3px]",
+//   md: "rounded-[4px]",
+//   lg: "rounded-lg",
+//   full: "rounded-full",
+// };
+
+// export function Skeleton({
+//   className = "",
+//   width,
+//   height,
+//   rounded = "md",
+// }: SkeletonProps) {
+//   return (
+//     <div
+//       className={`relative overflow-hidden bg-[var(--gw-bg3)] ${radius[rounded]} ${className}`}
+//       style={{
+//         width: typeof width === "number" ? `${width}px` : width,
+//         height: typeof height === "number" ? `${height}px` : height,
+//       }}
+//     >
+//       <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.6s_infinite] bg-gradient-to-r from-transparent via-[var(--gw-border-hi)] to-transparent opacity-40" />
+//     </div>
+//   );
+// }
+
+// export function SkeletonText({
+//   lines = 3,
+//   className = "",
+// }: {
+//   lines?: number;
+//   className?: string;
+// }) {
+//   return (
+//     <div className={`flex flex-col gap-2 ${className}`}>
+//       {Array.from({ length: lines }).map((_, i) => (
+//         <Skeleton
+//           key={i}
+//           height={12}
+//           width={i === lines - 1 ? "60%" : "100%"}
+//         />
+//       ))}
+//     </div>
+//   );
+// }
+
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// // 📁 src/components/ui/TextArea.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // "use client";
 
@@ -687,7 +839,9 @@
 // );
 // Textarea.displayName = "Textarea";
 
-// // src/components/ui/Toast.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// // 📁 src/components/ui/Toast.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // "use client";
 
@@ -722,6 +876,7 @@
 //   error: (title: string, description?: string, duration?: number) => void;
 //   warning: (title: string, description?: string, duration?: number) => void;
 //   info: (title: string, description?: string, duration?: number) => void;
+//   review: (title: string, description?: string, duration?: number) => void;
 // }
 
 // // ─────────────────────────────────────────────
@@ -894,14 +1049,14 @@
 //       role="alert"
 //       aria-live="assertive"
 //       aria-atomic="true"
-//       style={{ 
-//         transform, 
-//         opacity, 
-//         maxHeight: maxH, 
-//         marginBottom: mb, 
-//         overflow: "hidden", 
-//         transition, 
-//         willChange: "transform, opacity, max-height" 
+//       style={{
+//         transform,
+//         opacity,
+//         maxHeight: maxH,
+//         marginBottom: mb,
+//         overflow: "hidden",
+//         transition,
+//         willChange: "transform, opacity, max-height"
 //       }}
 //       className="w-[320px] relative cursor-pointer"
 //       onClick={handleDismiss}
@@ -984,9 +1139,14 @@
 //       addToast({ title, description, variant: "info", duration }),
 //     [addToast]
 //   );
+//   const review = useCallback(
+//     (title: string, description?: string, duration = DEFAULT_DURATION) =>
+//       addToast({ title, description, variant: "info", duration }),
+//     [addToast]
+//   );
 
 //   return (
-//     <ToastContext.Provider value={{ addToast, removeToast, success, error, warning, info }}>
+//     <ToastContext.Provider value={{ addToast, removeToast, success, error, warning, info, review }}>
 //       {children}
 //       <ToastContainer toasts={toasts} onRemove={removeToast} />
 //     </ToastContext.Provider>
@@ -1021,7 +1181,9 @@
 //   </div>
 // );
 
-// // src/components/ui/Toggle.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// // 📁 src/components/ui/Toggle.tsx
+// // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // "use client";
 
@@ -1059,15 +1221,15 @@
 //     >
 //       <div
 //         className={`relative w-9 h-5 rounded-[10px] border transition-all duration-200 flex-shrink-0 ${
-//           checked 
-//             ? "bg-[var(--gw-fern)] border-[var(--gw-fern-hi)]" 
+//           checked
+//             ? "bg-[var(--gw-fern)] border-[var(--gw-fern-hi)]"
 //             : "bg-[var(--gw-bg3)] border-[var(--gw-border)]"
 //         }`}
 //       >
 //         <div
 //           className={`absolute top-[3px] w-3.5 h-3.5 rounded-full transition-transform duration-200 shadow-sm ${
-//             checked 
-//               ? "translate-x-[18px] bg-white" 
+//             checked
+//               ? "translate-x-[18px] bg-white"
 //               : "translate-x-[2px] bg-[var(--gw-sub)]"
 //           }`}
 //         />

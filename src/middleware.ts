@@ -11,10 +11,9 @@ export function middleware(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE)?.value
   const path = req.nextUrl.pathname
 
-  // Never block API routes — API routes handle their own auth.
   if (path.startsWith('/api')) return NextResponse.next()
 
-  const isAuthRoute = path.startsWith('/login') || path.startsWith('/register')
+  const isAuthRoute = path.startsWith('/login')
   const isPublic = isAuthRoute || path === '/'
 
   if (token && isAuthRoute) {

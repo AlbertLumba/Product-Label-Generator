@@ -1,9 +1,6 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 📁 src/lib/auth.ts
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//
-// Stateless signed-cookie session (HMAC, no DB row).
-// Logout only clears the cookie client-side.
 
 import prisma from '@/lib/prisma'
 import crypto from 'crypto'
@@ -11,7 +8,7 @@ import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
 
 const SESSION_COOKIE = 'session_token'
-const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7 // 1 week
+const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret-change-me'
 
 export type Role = 'ADMIN' | 'USER'

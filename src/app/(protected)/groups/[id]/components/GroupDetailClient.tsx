@@ -93,7 +93,7 @@ export function GroupDetailClient({
   };
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-5">
+    <div className="mx-auto flex flex-col gap-5">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <button

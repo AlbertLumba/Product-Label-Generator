@@ -1,4 +1,6 @@
-// src/app/(protected)/tasks/components/TasksClient.tsx
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📁 src/app/(protected)/tasks/components/TasksClient.tsx
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 "use client";
 
@@ -8,10 +10,7 @@ import {
   ListChecks,
   Plus,
   Search,
-  Clock,
-  CheckCircle2,
   MessageSquare,
-  AlertTriangle,
   Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -19,7 +18,9 @@ import { Badge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
 import { Input } from "@/components/ui/Input";
 import { Divider } from "@/components/ui/Divider";
+import { StatusBadge } from "@/components/ui/MethodBadge";
 import { useToast } from "@/components/ui/Toast";
+import { deriveTaskStatus } from "@/lib/task-status";
 import type {
   TaskRow,
   TasksListResponse,
@@ -56,7 +57,6 @@ export function TasksClient({ initial, groups }: Props) {
   const [data, setData] = useState<TasksListResponse | null>(initial);
   const [loading, setLoading] = useState(false);
 
-  // Filters
   const [scope, setScope] = useState<"mine" | "all">("mine");
   const [priority, setPriority] = useState<string>("");
   const [groupFilter, setGroupFilter] = useState<string>("");
@@ -90,7 +90,10 @@ export function TasksClient({ initial, groups }: Props) {
       }
       setData(json.data);
     } catch (err) {
-      toast.error("Load failed", err instanceof Error ? err.message : "Unknown error");
+      toast.error(
+        "Load failed",
+        err instanceof Error ? err.message : "Unknown error"
+      );
     } finally {
       setLoading(false);
     }
@@ -104,7 +107,6 @@ export function TasksClient({ initial, groups }: Props) {
     refresh();
   }, [refresh]);
 
-  // Reset page when filters change
   useEffect(() => {
     setPage(1);
   }, [scope, priority, groupFilter, reviewed, debouncedQ]);
@@ -120,7 +122,9 @@ export function TasksClient({ initial, groups }: Props) {
             <ListChecks size={18} className="text-[var(--gw-fern-text)]" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-[var(--gw-text)]">Tasks</h2>
+            <h2 className="text-lg font-semibold text-[var(--gw-text)]">
+              Tasks
+            </h2>
             <p className="text-sm text-[var(--gw-sub)]">
               {data?.total ?? 0} task{data?.total === 1 ? "" : "s"}
               {scope === "mine" ? " · your tasks" : " · all tasks"}
@@ -143,7 +147,9 @@ export function TasksClient({ initial, groups }: Props) {
             placeholder="Search title or description..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            prefixNode={<Search size={13} className="text-[var(--gw-muted)]" />}
+            prefixNode={
+              <Search size={13} className="text-[var(--gw-muted)]" />
+            }
           />
 
           <Select
@@ -285,8 +291,11 @@ function TaskRowItem({
   task: TaskRow;
   onClick: () => void;
 }) {
-  const overdue =
-    task.dueDate && !task.completedAt && new Date(task.dueDate) < new Date();
+  const status = deriveTaskStatus({
+    dueDate: task.dueDate,
+    completedAt: task.completedAt,
+    isReviewed: task.isReviewed,
+  });
 
   return (
     <div
@@ -295,24 +304,13 @@ function TaskRowItem({
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 mb-1 flex-wrap">
-          <Badge variant={priorityVariant[task.priority]}>{task.priority}</Badge>
+          <Badge variant={priorityVariant[task.priority]}>
+            {task.priority}
+          </Badge>
+          <StatusBadge status={status} />
           {task.group && (
             <span className="font-mono text-[11px] text-[var(--gw-muted)]">
               {task.group.name}
-            </span>
-          )}
-          {task.isReviewed ? (
-            <span className="inline-flex items-center gap-1 font-mono text-[11px] text-[var(--gw-fern-text)]">
-              <CheckCircle2 size={11} /> Reviewed
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 font-mono text-[11px] text-[var(--gw-amber)]">
-              <Clock size={11} /> Pending
-            </span>
-          )}
-          {overdue && (
-            <span className="inline-flex items-center gap-1 font-mono text-[11px] text-[var(--gw-red)]">
-              <AlertTriangle size={11} /> Overdue
             </span>
           )}
         </div>

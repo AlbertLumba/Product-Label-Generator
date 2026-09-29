@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { Textarea } from "@/components/ui/Textarea";
+import { Textarea } from "@/components/ui/TextArea";
 import { IconButton } from "@/components/ui/IconButton";
 import { Alert } from "@/components/ui/Alert";
 import { useToast } from "@/components/ui/Toast";
@@ -58,10 +58,10 @@ export function GroupsClient({ initial, isAdmin }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-950 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-[var(--gw-fern-bg)] border border-[var(--gw-fern-dim)] rounded-xl flex items-center justify-center">
             <FolderKanban
               size={18}
-              className="text-indigo-600 dark:text-indigo-400"
+              className="text-[var(--gw-fern-text)]"
             />
           </div>
           <div>

@@ -103,8 +103,8 @@ export function UsersClient({ initial }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-950 rounded-xl flex items-center justify-center">
-            <UsersIcon size={18} className="text-indigo-600 dark:text-indigo-400" />
+          <div className="w-10 h-10 bg-[var(--gw-fern-bg)] border border-[var(--gw-fern-dim)] rounded-xl flex items-center justify-center">
+            <UsersIcon size={18} className="text-[var(--gw-fern-text)]" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-[var(--gw-text)]">Users</h2>
@@ -207,7 +207,7 @@ function UserRowItem({
       <div
         className={`w-9 h-9 rounded-full flex items-center justify-center font-mono text-[12px] font-semibold flex-shrink-0 ${
           isAdmin
-            ? "bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300"
+            ? "bg-[var(--gw-fern-bg)] border border-[var(--gw-fern-dim)] text-[var(--gw-fern-text)]"
             : "bg-[var(--gw-bg3)] text-[var(--gw-sub)]"
         }`}
       >

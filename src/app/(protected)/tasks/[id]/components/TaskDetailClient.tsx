@@ -20,11 +20,13 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { Card } from "@/components/ui/Card";
+import { Card, type CardAccent } from "@/components/ui/Card";
 import { Divider } from "@/components/ui/Divider";
 import { Textarea } from "@/components/ui/TextArea";
 import { Alert } from "@/components/ui/Alert";
+import { StatusBadge } from "@/components/ui/MethodBadge";
 import { useToast } from "@/components/ui/Toast";
+import { deriveTaskStatus } from "@/lib/task-status";
 import type { TaskDetail } from "../page";
 import type { SessionUser } from "@/lib/auth";
 
@@ -32,6 +34,13 @@ const priorityVariant: Record<
   TaskDetail["priority"],
   "muted" | "cyan" | "amber" | "red"
 > = {
+  LOW: "muted",
+  MEDIUM: "cyan",
+  HIGH: "amber",
+  URGENT: "red",
+};
+
+const priorityAccent: Record<TaskDetail["priority"], CardAccent> = {
   LOW: "muted",
   MEDIUM: "cyan",
   HIGH: "amber",
@@ -68,6 +77,12 @@ export function TaskDetailClient({ task: initialTask, currentUser }: Props) {
   const isAdmin = currentUser?.role === "ADMIN";
   const isAuthor = currentUser?.id === task.author.id;
   const canEdit = isAdmin || (isAuthor && !task.isReviewed);
+
+  const status = deriveTaskStatus({
+    dueDate: task.dueDate,
+    completedAt: task.completedAt,
+    isReviewed: task.isReviewed,
+  });
 
   const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,7 +136,8 @@ export function TaskDetailClient({ task: initialTask, currentUser }: Props) {
         reviewedAt: json.data.task.reviewedAt,
         reviewNotes: json.data.task.reviewNotes,
       }));
-      toast.success(reviewed ? "Task approved" : "Review revoked");
+      // Uses the new `review` variant on Toast
+      toast.review(reviewed ? "Task approved" : "Review revoked");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       setError(msg);
@@ -154,7 +170,7 @@ export function TaskDetailClient({ task: initialTask, currentUser }: Props) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-5">
+    <div className="flex flex-col gap-5">
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
@@ -169,18 +185,10 @@ export function TaskDetailClient({ task: initialTask, currentUser }: Props) {
               <Badge variant={priorityVariant[task.priority]}>
                 {task.priority}
               </Badge>
+              <StatusBadge status={status} />
               {task.group && (
                 <span className="inline-flex items-center gap-1 font-mono text-[11px] text-[var(--gw-muted)]">
                   <FolderKanban size={11} /> {task.group.name}
-                </span>
-              )}
-              {task.isReviewed ? (
-                <span className="inline-flex items-center gap-1 font-mono text-[11px] text-[var(--gw-fern-text)]">
-                  <CheckCircle2 size={11} /> Reviewed
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 font-mono text-[11px] text-[var(--gw-amber)]">
-                  <Clock size={11} /> Pending review
                 </span>
               )}
             </div>
@@ -208,8 +216,11 @@ export function TaskDetailClient({ task: initialTask, currentUser }: Props) {
         </Alert>
       )}
 
-      {/* Meta card */}
-      <Card className="p-5 flex flex-col gap-3">
+      {/* Meta card — accent stripe colored by priority */}
+      <Card
+        className="p-5 flex flex-col gap-3"
+        accent={priorityAccent[task.priority]}
+      >
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <MetaItem
             icon={<UserIcon size={13} />}
@@ -248,9 +259,12 @@ export function TaskDetailClient({ task: initialTask, currentUser }: Props) {
         )}
       </Card>
 
-      {/* Admin review panel — only for admins */}
+      {/* Admin review panel */}
       {isAdmin && (
-        <Card className="p-5 flex flex-col gap-4">
+        <Card
+          className="p-5 flex flex-col gap-4"
+          accent={task.isReviewed ? "green" : "amber"}
+        >
           <div className="flex items-center gap-2">
             <ShieldCheck size={14} className="text-[var(--gw-fern-text)]" />
             <p className="font-mono text-[12px] tracking-[0.1em] uppercase text-[var(--gw-sub)]">
@@ -283,7 +297,7 @@ export function TaskDetailClient({ task: initialTask, currentUser }: Props) {
           <div className="flex gap-2 justify-end">
             {task.isReviewed && (
               <Button
-                variant="outline"
+                variant="reject"
                 size="sm"
                 loading={reviewing}
                 onClick={() => handleReview(false)}
@@ -292,6 +306,7 @@ export function TaskDetailClient({ task: initialTask, currentUser }: Props) {
               </Button>
             )}
             <Button
+              variant="approve"
               size="sm"
               icon={<CheckCircle2 size={13} />}
               loading={reviewing}
@@ -303,9 +318,12 @@ export function TaskDetailClient({ task: initialTask, currentUser }: Props) {
         </Card>
       )}
 
-      {/* Non-admin view of review result (read-only) */}
+      {/* Non-admin view of review result */}
       {!isAdmin && task.isReviewed && (
-        <Card className="p-5 flex flex-col gap-2">
+        <Card
+          className="p-5 flex flex-col gap-2"
+          accent="green"
+        >
           <div className="flex items-center gap-2">
             <ShieldCheck size={14} className="text-[var(--gw-fern-text)]" />
             <p className="font-mono text-[12px] tracking-[0.1em] uppercase text-[var(--gw-sub)]">

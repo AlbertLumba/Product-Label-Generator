@@ -6,7 +6,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Activity as ActivityIcon, Plus, CheckCircle2, Edit3, MessageSquare, Clock } from "lucide-react";
+import {
+  Activity as ActivityIcon,
+  Plus,
+  CheckCircle2,
+  Edit3,
+  MessageSquare,
+  Clock,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
@@ -105,10 +112,10 @@ export function ActivityClient({ initial, isAdmin }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-950 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-[var(--gw-fern-bg)] border border-[var(--gw-fern-dim)] rounded-xl flex items-center justify-center">
             <ActivityIcon
               size={18}
-              className="text-indigo-600 dark:text-indigo-400"
+              className="text-[var(--gw-fern-text)]"
             />
           </div>
           <div>

@@ -8,6 +8,7 @@ import { redirect } from 'next/navigation'
 import Header from '@/components/layout/header'
 import Sidebar from '@/components/layout/sidebar'
 import { AuthProvider } from '@/components/providers/AuthProvider'
+import { NavProgress } from '@/components/layout/NavProgress'
 
 export default async function ProtectedLayout({
   children,
@@ -21,11 +22,12 @@ export default async function ProtectedLayout({
 
   return (
     <AuthProvider initialUser={user} initialNav={nav}>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <NavProgress />
+      <div className="min-h-screen bg-gw-bg">
         <Header />
         <Sidebar />
-        <div className="pl-16 pt-16">
-          <main className="p-5">{children}</main>
+        <div className="pt-16 pl-16">
+          <main className="p-5 w-full">{children}</main>
         </div>
       </div>
     </AuthProvider>
