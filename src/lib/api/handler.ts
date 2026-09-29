@@ -6,11 +6,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { AppError } from "./errors";
 import { serverError, badRequest } from "./server";
 
-type RouteHandler = (req: NextRequest, ctx?: unknown) => Promise<NextResponse>;
-type WrappedHandler = (req: NextRequest, ctx?: unknown) => Promise<NextResponse>;
+type RouteContext<P = Record<string, string>> = {
+  params: Promise<P>;
+};
 
-export function apiHandler(fn: RouteHandler): WrappedHandler {
-  return async (req: NextRequest, ctx?: unknown) => {
+type RouteHandler<P = Record<string, string>> = (
+  req: NextRequest,
+  ctx: RouteContext<P>,
+) => Promise<NextResponse>;
+
+export function apiHandler<P = Record<string, string>>(
+  fn: RouteHandler<P>,
+): (req: NextRequest, ctx: RouteContext<P>) => Promise<NextResponse> {
+  return async (req, ctx) => {
     try {
       return await fn(req, ctx);
     } catch (error) {
@@ -21,13 +29,6 @@ export function apiHandler(fn: RouteHandler): WrappedHandler {
       return serverError();
     }
   };
-}
-
-export function getPagination(req: NextRequest) {
-  const sp = req.nextUrl.searchParams;
-  const page = Math.max(1, parseInt(sp.get("page") || "1"));
-  const limit = Math.min(100, Math.max(1, parseInt(sp.get("limit") || "10")));
-  return { page, limit, skip: (page - 1) * limit };
 }
 
 export async function getBody<T>(req: NextRequest): Promise<T> {

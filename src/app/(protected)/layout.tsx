@@ -27,7 +27,7 @@ export default async function ProtectedLayout({
         <Header />
         <Sidebar />
         <div className="pt-16 pl-16">
-          <main className="p-5 w-full">{children}</main>
+          <main className="p-3 w-full">{children}</main>
         </div>
       </div>
     </AuthProvider>

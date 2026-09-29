@@ -74,3 +74,21 @@ export function serverError(message = "Server error", error?: string) {
     status: 500,
   });
 }
+
+// ─── Generic — used by API routes that pass a status code ───
+export function fail(
+  status: number,
+  message = "Error",
+  error?: unknown,
+) {
+  const errorString =
+    typeof error === "string"
+      ? error
+      : error
+        ? JSON.stringify(error)
+        : undefined;
+
+  return NextResponse.json(build(false, status, message, null, errorString), {
+    status,
+  });
+}

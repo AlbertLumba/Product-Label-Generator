@@ -101,9 +101,10 @@ export function ActivityClient({ initial, isAdmin }: Props) {
     refresh();
   }, [refresh]);
 
-  useEffect(() => {
+  const handleActionChange = (next: string) => {
+    setAction(next);
     setPage(1);
-  }, [action]);
+  };
 
   const activity = data?.activity ?? [];
 
@@ -112,17 +113,12 @@ export function ActivityClient({ initial, isAdmin }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[var(--gw-fern-bg)] border border-[var(--gw-fern-dim)] rounded-xl flex items-center justify-center">
-            <ActivityIcon
-              size={18}
-              className="text-[var(--gw-fern-text)]"
-            />
+          <div className="w-10 h-10 bg-gw-fern-bg border border-gw-fern-dim rounded-xl flex items-center justify-center">
+            <ActivityIcon size={18} className="text-gw-fern-text" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-[var(--gw-text)]">
-              Activity
-            </h2>
-            <p className="text-sm text-[var(--gw-sub)]">
+            <h2 className="text-lg font-semibold text-gw-text">Activity</h2>
+            <p className="text-sm text-gw-sub">
               {data?.total ?? 0} events
               {isAdmin ? " · across all users" : " · on your tasks"}
             </p>
@@ -131,11 +127,11 @@ export function ActivityClient({ initial, isAdmin }: Props) {
       </div>
 
       {/* Filter */}
-      <div className="bg-[var(--gw-bg1)] border border-[var(--gw-border)] rounded-xl p-4">
+      <div className="bg-gw-bg1 border border-gw-border rounded-xl p-4">
         <Select
           label="Action"
           value={action}
-          onChange={(e) => setAction(e.target.value)}
+          onChange={(e) => handleActionChange(e.target.value)}
           options={[
             { value: "", label: "All actions" },
             { value: "CREATED", label: "Created" },
@@ -147,9 +143,9 @@ export function ActivityClient({ initial, isAdmin }: Props) {
       </div>
 
       {/* List */}
-      <div className="bg-[var(--gw-bg1)] border border-[var(--gw-border)] rounded-xl overflow-hidden">
+      <div className="bg-gw-bg1 border border-gw-border rounded-xl overflow-hidden">
         {loading && (
-          <div className="px-5 py-3 border-b border-[var(--gw-border)] text-xs font-mono text-[var(--gw-muted)]">
+          <div className="px-5 py-3 border-b border-gw-border text-xs font-mono text-gw-muted">
             Loading…
           </div>
         )}
@@ -158,15 +154,15 @@ export function ActivityClient({ initial, isAdmin }: Props) {
           <div className="px-5 py-16 text-center">
             <ActivityIcon
               size={28}
-              className="mx-auto text-[var(--gw-muted)] mb-3"
+              className="mx-auto text-gw-muted mb-3"
             />
-            <p className="font-mono text-[13px] text-[var(--gw-sub)]">
+            <p className="font-mono text-[13px] text-gw-sub">
               No activity yet
             </p>
           </div>
         )}
 
-        <div className="divide-y divide-[var(--gw-border)]">
+        <div className="divide-y divide-gw-border">
           {activity.map((a) => {
             const Icon = ACTION_ICONS[a.action] ?? Clock;
             const label = ACTION_LABELS[a.action] ?? a.action.toLowerCase();
@@ -174,18 +170,18 @@ export function ActivityClient({ initial, isAdmin }: Props) {
               <div
                 key={a.id}
                 onClick={() => router.push(`/tasks/${a.task.id}`)}
-                className="flex items-center gap-4 px-5 py-3.5 cursor-pointer hover:bg-[var(--gw-bg2)] transition-colors"
+                className="flex items-center gap-4 px-5 py-3.5 cursor-pointer hover:bg-gw-bg2 transition-colors"
               >
-                <div className="w-8 h-8 rounded-full bg-[var(--gw-bg3)] flex items-center justify-center flex-shrink-0">
-                  <Icon size={13} className="text-[var(--gw-sub)]" />
+                <div className="w-8 h-8 rounded-full bg-gw-bg3 flex items-center justify-center flex-shrink-0">
+                  <Icon size={13} className="text-gw-sub" />
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className="font-mono text-[12px] text-[var(--gw-text)]">
-                    <span className="text-[var(--gw-sub)]">{a.actor.name}</span>{" "}
+                  <p className="font-mono text-[12px] text-gw-text">
+                    <span className="text-gw-sub">{a.actor.name}</span>{" "}
                     {label}
                   </p>
-                  <p className="font-mono text-[11px] text-[var(--gw-muted)] truncate mt-0.5">
+                  <p className="font-mono text-[11px] text-gw-muted truncate mt-0.5">
                     {a.task.title}
                   </p>
                 </div>
@@ -196,7 +192,7 @@ export function ActivityClient({ initial, isAdmin }: Props) {
                       Admin
                     </Badge>
                   )}
-                  <span className="font-mono text-[10px] text-[var(--gw-muted)]">
+                  <span className="font-mono text-[10px] text-gw-muted">
                     {formatDate(a.createdAt)}
                   </span>
                 </div>
@@ -209,7 +205,7 @@ export function ActivityClient({ initial, isAdmin }: Props) {
       {/* Pagination */}
       {data && data.totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <span className="font-mono text-[11px] text-[var(--gw-muted)]">
+          <span className="font-mono text-[11px] text-gw-muted">
             Page {data.page} of {data.totalPages}
           </span>
           <div className="flex gap-2">

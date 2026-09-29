@@ -6,7 +6,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { api } from '@/lib/api/client'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'

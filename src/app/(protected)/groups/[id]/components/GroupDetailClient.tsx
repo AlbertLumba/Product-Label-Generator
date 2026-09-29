@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
-import { Divider } from "@/components/ui/Divider";
 import { useToast } from "@/components/ui/Toast";
 import type { GroupDetail } from "../page";
 

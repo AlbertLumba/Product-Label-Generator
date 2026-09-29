@@ -107,10 +107,6 @@ export function TasksClient({ initial, groups }: Props) {
     refresh();
   }, [refresh]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [scope, priority, groupFilter, reviewed, debouncedQ]);
-
   const tasks = data?.tasks ?? [];
 
   return (
@@ -118,14 +114,12 @@ export function TasksClient({ initial, groups }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[var(--gw-fern-bg)] border border-[var(--gw-fern-dim)] rounded-xl flex items-center justify-center">
-            <ListChecks size={18} className="text-[var(--gw-fern-text)]" />
+          <div className="w-10 h-10 bg-gw-fern-bg border border-gw-fern-dim rounded-xl flex items-center justify-center">
+            <ListChecks size={18} className="text-gw-fern-text" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-[var(--gw-text)]">
-              Tasks
-            </h2>
-            <p className="text-sm text-[var(--gw-sub)]">
+            <h2 className="text-lg font-semibold text-gw-text">Tasks</h2>
+            <p className="text-sm text-gw-sub">
               {data?.total ?? 0} task{data?.total === 1 ? "" : "s"}
               {scope === "mine" ? " · your tasks" : " · all tasks"}
             </p>
@@ -140,22 +134,28 @@ export function TasksClient({ initial, groups }: Props) {
       </div>
 
       {/* Filters */}
-      <div className="bg-[var(--gw-bg1)] border border-[var(--gw-border)] rounded-xl p-4 flex flex-col gap-4">
+      <div className="bg-gw-bg1 border border-gw-border rounded-xl p-4 flex flex-col gap-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <Input
             label="Search"
             placeholder="Search title or description..."
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={(e) => {
+              setQ(e.target.value);
+              setPage(1);
+            }}
             prefixNode={
-              <Search size={13} className="text-[var(--gw-muted)]" />
+              <Search size={13} className="text-gw-muted" />
             }
           />
 
           <Select
             label="Scope"
             value={scope}
-            onChange={(e) => setScope(e.target.value as "mine" | "all")}
+            onChange={(e) => {
+              setScope(e.target.value as "mine" | "all");
+              setPage(1);
+            }}
             options={[
               { value: "mine", label: "My tasks" },
               { value: "all", label: "All tasks (admin)" },
@@ -165,7 +165,10 @@ export function TasksClient({ initial, groups }: Props) {
           <Select
             label="Priority"
             value={priority}
-            onChange={(e) => setPriority(e.target.value)}
+            onChange={(e) => {
+              setPriority(e.target.value);
+              setPage(1);
+            }}
             options={[
               { value: "", label: "Any priority" },
               { value: "LOW", label: "Low" },
@@ -178,7 +181,10 @@ export function TasksClient({ initial, groups }: Props) {
           <Select
             label="Review"
             value={reviewed}
-            onChange={(e) => setReviewed(e.target.value)}
+            onChange={(e) => {
+              setReviewed(e.target.value);
+              setPage(1);
+            }}
             options={[
               { value: "", label: "Any" },
               { value: "false", label: "Pending review" },
@@ -193,14 +199,20 @@ export function TasksClient({ initial, groups }: Props) {
             <div className="flex flex-wrap gap-2">
               <FilterPill
                 active={!groupFilter}
-                onClick={() => setGroupFilter("")}
+                onClick={() => {
+                  setGroupFilter("");
+                  setPage(1);
+                }}
                 label="All groups"
               />
               {groups.map((g) => (
                 <FilterPill
                   key={g.id}
                   active={groupFilter === g.id}
-                  onClick={() => setGroupFilter(g.id)}
+                  onClick={() => {
+                    setGroupFilter(g.id);
+                    setPage(1);
+                  }}
                   label={g.name}
                 />
               ))}
@@ -210,9 +222,9 @@ export function TasksClient({ initial, groups }: Props) {
       </div>
 
       {/* List */}
-      <div className="bg-[var(--gw-bg1)] border border-[var(--gw-border)] rounded-xl overflow-hidden">
+      <div className="bg-gw-bg1 border border-gw-border rounded-xl overflow-hidden">
         {loading && (
-          <div className="px-5 py-3 border-b border-[var(--gw-border)] text-xs font-mono text-[var(--gw-muted)]">
+          <div className="px-5 py-3 border-b border-gw-border text-xs font-mono text-gw-muted">
             Loading…
           </div>
         )}
@@ -221,12 +233,12 @@ export function TasksClient({ initial, groups }: Props) {
           <div className="px-5 py-16 text-center">
             <ListChecks
               size={28}
-              className="mx-auto text-[var(--gw-muted)] mb-3"
+              className="mx-auto text-gw-muted mb-3"
             />
-            <p className="font-mono text-[13px] text-[var(--gw-sub)] mb-1">
+            <p className="font-mono text-[13px] text-gw-sub mb-1">
               No tasks found
             </p>
-            <p className="font-mono text-[11px] text-[var(--gw-muted)] mb-4">
+            <p className="font-mono text-[11px] text-gw-muted mb-4">
               Adjust your filters or create your first task.
             </p>
             <Button
@@ -239,7 +251,7 @@ export function TasksClient({ initial, groups }: Props) {
           </div>
         )}
 
-        <div className="divide-y divide-[var(--gw-border)]">
+        <div className="divide-y divide-gw-border">
           {tasks.map((task) => (
             <TaskRowItem
               key={task.id}
@@ -253,7 +265,7 @@ export function TasksClient({ initial, groups }: Props) {
       {/* Pagination */}
       {data && data.totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <span className="font-mono text-[11px] text-[var(--gw-muted)]">
+          <span className="font-mono text-[11px] text-gw-muted">
             Page {data.page} of {data.totalPages}
           </span>
           <div className="flex gap-2">
@@ -300,7 +312,7 @@ function TaskRowItem({
   return (
     <div
       onClick={onClick}
-      className="flex items-center gap-4 px-5 py-3.5 cursor-pointer hover:bg-[var(--gw-bg2)] transition-colors"
+      className="flex items-center gap-4 px-5 py-3.5 cursor-pointer hover:bg-gw-bg2 transition-colors"
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -309,24 +321,24 @@ function TaskRowItem({
           </Badge>
           <StatusBadge status={status} />
           {task.group && (
-            <span className="font-mono text-[11px] text-[var(--gw-muted)]">
+            <span className="font-mono text-[11px] text-gw-muted">
               {task.group.name}
             </span>
           )}
         </div>
 
-        <p className="font-mono text-[13px] text-[var(--gw-text)] truncate">
+        <p className="font-mono text-[13px] text-gw-text truncate">
           {task.title}
         </p>
 
         <div className="flex items-center gap-2 mt-1">
-          <span className="font-mono text-[11px] text-[var(--gw-muted)]">
+          <span className="font-mono text-[11px] text-gw-muted">
             by {task.author.name}
           </span>
           {task.commentsCount > 0 && (
             <>
-              <span className="text-[var(--gw-muted)]">·</span>
-              <span className="inline-flex items-center gap-1 font-mono text-[11px] text-[var(--gw-muted)]">
+              <span className="text-gw-muted">·</span>
+              <span className="inline-flex items-center gap-1 font-mono text-[11px] text-gw-muted">
                 <MessageSquare size={10} /> {task.commentsCount}
               </span>
             </>
@@ -335,7 +347,7 @@ function TaskRowItem({
       </div>
 
       {task.dueDate && (
-        <div className="flex items-center gap-1.5 text-[var(--gw-muted)] flex-shrink-0">
+        <div className="flex items-center gap-1.5 text-gw-muted flex-shrink-0">
           <Calendar size={12} />
           <span className="font-mono text-[11px]">
             {formatDate(task.dueDate)}
@@ -364,8 +376,8 @@ function FilterPill({
       onClick={onClick}
       className={`font-mono text-[11px] tracking-[0.08em] uppercase px-2.5 py-1 rounded-[3px] border transition-all duration-150 ${
         active
-          ? "bg-[var(--gw-fern-bg)] border-[var(--gw-fern-dim)] text-[var(--gw-fern-text)]"
-          : "bg-transparent border-[var(--gw-border)] text-[var(--gw-muted)] hover:border-[var(--gw-border-hi)] hover:text-[var(--gw-sub)]"
+          ? "bg-gw-fern-bg border-gw-fern-dim text-gw-fern-text"
+          : "bg-transparent border-gw-border text-gw-muted hover:border-gw-border-hi hover:text-gw-sub"
       }`}
     >
       {label}

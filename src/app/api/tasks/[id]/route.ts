@@ -1,4 +1,6 @@
-// src/app/api/tasks/[id]/route.ts
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📁 src/app/api/tasks/[id]/route.ts
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import { apiHandler } from "@/lib/api/handler";
 import { ok, fail } from "@/lib/api/server";
@@ -6,14 +8,14 @@ import prisma from "@/lib/prisma";
 import { getUser } from "@/lib/auth";
 import { updateTaskSchema } from "@/lib/validations/task";
 
-type Ctx = { params: { id: string } };
-
-export const GET = apiHandler(async (_req, ctx: Ctx) => {
+export const GET = apiHandler<{ id: string }>(async (_req, ctx) => {
   const user = await getUser();
   if (!user) return fail(401, "Unauthorized");
 
+  const { id } = await ctx.params;
+
   const task = await prisma.task.findUnique({
-    where: { id: ctx.params.id },
+    where: { id },
     include: {
       author: { select: { id: true, name: true, email: true, role: true } },
       group: { select: { id: true, name: true } },
@@ -66,13 +68,13 @@ export const GET = apiHandler(async (_req, ctx: Ctx) => {
   });
 });
 
-export const PATCH = apiHandler(async (req, ctx: Ctx) => {
+export const PATCH = apiHandler<{ id: string }>(async (req, ctx) => {
   const user = await getUser();
   if (!user) return fail(401, "Unauthorized");
 
-  const existing = await prisma.task.findUnique({
-    where: { id: ctx.params.id },
-  });
+  const { id } = await ctx.params;
+
+  const existing = await prisma.task.findUnique({ where: { id } });
   if (!existing) return fail(404, "Task not found");
 
   const isAdmin = user.role === "ADMIN";
@@ -130,13 +132,13 @@ export const PATCH = apiHandler(async (req, ctx: Ctx) => {
   });
 });
 
-export const DELETE = apiHandler(async (_req, ctx: Ctx) => {
+export const DELETE = apiHandler<{ id: string }>(async (_req, ctx) => {
   const user = await getUser();
   if (!user) return fail(401, "Unauthorized");
 
-  const existing = await prisma.task.findUnique({
-    where: { id: ctx.params.id },
-  });
+  const { id } = await ctx.params;
+
+  const existing = await prisma.task.findUnique({ where: { id } });
   if (!existing) return fail(404, "Task not found");
 
   const isAdmin = user.role === "ADMIN";

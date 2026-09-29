@@ -1,10 +1,13 @@
-// src/app/api/tasks/route.ts
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📁 src/app/api/tasks/route.ts
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import { apiHandler } from "@/lib/api/handler";
 import { ok, fail } from "@/lib/api/server";
 import prisma from "@/lib/prisma";
 import { getUser } from "@/lib/auth";
 import { createTaskSchema, listTasksQuerySchema } from "@/lib/validations/task";
+import type { Prisma } from "@prisma/client";
 
 export const GET = apiHandler(async (req) => {
   const user = await getUser();
@@ -22,7 +25,7 @@ export const GET = apiHandler(async (req) => {
   const canViewAll = user.role === "ADMIN";
   const effectiveScope = canViewAll ? scope : "mine";
 
-  const where: any = {};
+  const where: Prisma.TaskWhereInput = {};
 
   if (effectiveScope === "mine") where.authorId = user.id;
   else if (authorId) where.authorId = authorId;

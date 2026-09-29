@@ -13,8 +13,10 @@ export function NavProgress() {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    setVisible(true);
-    setProgress(15);
+    const raf = requestAnimationFrame(() => {
+      setVisible(true);
+      setProgress(15);
+    });
 
     const t1 = setTimeout(() => setProgress(45), 80);
     const t2 = setTimeout(() => setProgress(75), 220);
@@ -25,6 +27,7 @@ export function NavProgress() {
     }, 620);
 
     return () => {
+      cancelAnimationFrame(raf);
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);

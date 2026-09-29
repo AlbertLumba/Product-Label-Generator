@@ -1,4 +1,6 @@
-// src/app/api/tasks/[id]/review/route.ts
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📁 src/app/api/tasks/[id]/review/route.ts
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import { apiHandler } from "@/lib/api/handler";
 import { ok, fail } from "@/lib/api/server";
@@ -6,14 +8,14 @@ import prisma from "@/lib/prisma";
 import { getUser } from "@/lib/auth";
 import { reviewTaskSchema } from "@/lib/validations/task";
 
-type Ctx = { params: { id: string } };
-
-export const PATCH = apiHandler(async (req, ctx: Ctx) => {
+export const PATCH = apiHandler<{ id: string }>(async (req, ctx) => {
   const user = await getUser();
   if (!user) return fail(401, "Unauthorized");
   if (user.role !== "ADMIN") return fail(403, "Admin only");
 
-  const task = await prisma.task.findUnique({ where: { id: ctx.params.id } });
+  const { id } = await ctx.params;
+
+  const task = await prisma.task.findUnique({ where: { id } });
   if (!task) return fail(404, "Task not found");
 
   const body = await req.json().catch(() => null);
