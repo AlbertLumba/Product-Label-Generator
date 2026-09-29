@@ -7,135 +7,151 @@ import { ok } from "@/lib/api/server";
 import prisma from "@/lib/prisma";
 
 export const GET = apiHandler(async () => {
-  // Total stats
-  const totalDebts = await prisma.debt.count();
-  const activeDebts = await prisma.debt.count({ where: { status: "ACTIVE" } });
-  const paidDebts = await prisma.debt.count({ where: { status: "PAID" } });
-  const cancelledDebts = await prisma.debt.count({ where: { status: "CANCELLED" } });
-
-  // Amount stats
-  const amountAgg = await prisma.debt.aggregate({
-    _sum: { totalAmount: true, balance: true },
+  // ── Task stats ──
+  const totalTasks = await prisma.task.count();
+  const reviewedTasks = await prisma.task.count({
+    where: { reviewedById: { not: null } },
+  });
+  const pendingReview = await prisma.task.count({
+    where: { reviewedById: null },
+  });
+  const overdueTasks = await prisma.task.count({
+    where: {
+      dueDate: { lt: new Date() },
+      completedAt: null,
+    },
   });
 
-  const totalAmount = Number(amountAgg._sum.totalAmount) || 0;
-  const totalBalance = Number(amountAgg._sum.balance) || 0;
-  const totalCollected = totalAmount - totalBalance;
-
-  // Payment stats
-  const paymentAgg = await prisma.payment.aggregate({
-    _sum: { amount: true },
+  // ── Priority breakdown ──
+  const priorityCounts = await prisma.task.groupBy({
+    by: ["priority"],
     _count: true,
   });
 
-  const totalPayments = paymentAgg._count;
-  const totalPaymentAmount = Number(paymentAgg._sum.amount) || 0;
+  const priorityStats = {
+    LOW: 0,
+    MEDIUM: 0,
+    HIGH: 0,
+    URGENT: 0,
+  } as Record<string, number>;
+  for (const p of priorityCounts) {
+    priorityStats[p.priority] = p._count;
+  }
 
-  // Top debts by balance (top 5)
-  const topDebts = await prisma.debt.findMany({
-    where: { status: "ACTIVE" },
-    orderBy: { balance: "desc" },
+  // ── Group + user counts ──
+  const totalGroups = await prisma.group.count();
+  const totalUsers = await prisma.user.count({ where: { role: "USER" } });
+
+  // ── Tasks awaiting admin review (top 5, oldest first) ──
+  const pendingReviewTasks = await prisma.task.findMany({
+    where: { reviewedById: null },
+    orderBy: [{ priority: "desc" }, { createdAt: "asc" }],
     take: 5,
     include: {
-      items: true,
-      payments: {
-        orderBy: { paymentDate: "desc" },
-        take: 1,
-      },
+      author: { select: { id: true, name: true, email: true } },
+      group: { select: { id: true, name: true } },
+      _count: { select: { comments: true, activityLogs: true } },
     },
   });
 
-  // Recent activity (latest 5 payments)
-  const recentPayments = await prisma.payment.findMany({
-    orderBy: { paymentDate: "desc" },
-    take: 5,
-    include: {
-      debt: {
-        select: {
-          id: true,
-          debtorName: true,
-          accessCode: true,
-        },
-      },
-    },
-  });
-
-  // Recent debts (latest 5)
-  const recentDebts = await prisma.debt.findMany({
+  // ── Recent activity (latest 5 activity logs) ──
+  const recentActivity = await prisma.activityLog.findMany({
     orderBy: { createdAt: "desc" },
     take: 5,
     include: {
-      items: true,
-      payments: true,
+      actor: { select: { id: true, name: true, role: true } },
+      task: { select: { id: true, title: true } },
     },
   });
 
-  // Monthly collection (last 6 months)
+  // ── Recent tasks (latest 5) ──
+  const recentTasks = await prisma.task.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 5,
+    include: {
+      author: { select: { id: true, name: true, email: true } },
+      group: { select: { id: true, name: true } },
+      reviewedBy: { select: { id: true, name: true } },
+      _count: { select: { comments: true, activityLogs: true } },
+    },
+  });
+
+  // ── Per-group task counts (for the "what is each group doing" view) ──
+  const groupTaskCounts = await prisma.group.findMany({
+    select: {
+      id: true,
+      name: true,
+      _count: { select: { tasks: true, members: true } },
+    },
+    orderBy: { name: "asc" },
+  });
+
+  // ── Monthly task creation (last 6 months) ──
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-  const monthlyPayments = await prisma.payment.findMany({
-    where: {
-      paymentDate: { gte: sixMonthsAgo },
-    },
-    orderBy: { paymentDate: "asc" },
+  const monthlyTasks = await prisma.task.findMany({
+    where: { createdAt: { gte: sixMonthsAgo } },
+    select: { createdAt: true },
+    orderBy: { createdAt: "asc" },
   });
 
-  // Group by month
   const monthlyData: Record<string, number> = {};
-  monthlyPayments.forEach((p) => {
-    const key = p.paymentDate.toLocaleDateString("en-US", { year: "numeric", month: "short" });
-    monthlyData[key] = (monthlyData[key] || 0) + Number(p.amount);
+  monthlyTasks.forEach((t) => {
+    const key = t.createdAt.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+    });
+    monthlyData[key] = (monthlyData[key] || 0) + 1;
   });
 
   return ok({
     stats: {
-      totalDebts,
-      activeDebts,
-      paidDebts,
-      cancelledDebts,
-      totalAmount,
-      totalBalance,
-      totalCollected,
-      totalPayments,
-      totalPaymentAmount,
-      collectionRate: totalAmount > 0 ? Math.round((totalCollected / totalAmount) * 100) : 0,
+      totalTasks,
+      reviewedTasks,
+      pendingReview,
+      overdueTasks,
+      totalGroups,
+      totalUsers,
+      priorityStats,
     },
-    topDebts: topDebts.map((d) => ({
-      id: d.id,
-      debtorName: d.debtorName,
-      debtorEmail: d.debtorEmail,
-      accessCode: d.accessCode,
-      totalAmount: Number(d.totalAmount),
-      balance: Number(d.balance),
-      status: d.status,
-      itemsCount: d.items.length,
-      lastPayment: d.payments[0] ? {
-        amount: Number(d.payments[0].amount),
-        date: d.payments[0].paymentDate,
-      } : null,
+    pendingReviewTasks: pendingReviewTasks.map((t) => ({
+      id: t.id,
+      title: t.title,
+      priority: t.priority,
+      dueDate: t.dueDate,
+      createdAt: t.createdAt,
+      author: t.author,
+      group: t.group,
+      commentsCount: t._count.comments,
+      activityCount: t._count.activityLogs,
     })),
-    recentPayments: recentPayments.map((p) => ({
-      id: p.id,
-      amount: Number(p.amount),
-      paymentDate: p.paymentDate,
-      method: p.method,
-      notes: p.notes,
-      debt: {
-        id: p.debt.id,
-        debtorName: p.debt.debtorName,
-        accessCode: p.debt.accessCode,
-      },
+    recentActivity: recentActivity.map((a) => ({
+      id: a.id,
+      action: a.action,
+      createdAt: a.createdAt,
+      actor: a.actor,
+      task: a.task,
     })),
-    recentDebts: recentDebts.map((d) => ({
-      id: d.id,
-      debtorName: d.debtorName,
-      accessCode: d.accessCode,
-      totalAmount: Number(d.totalAmount),
-      balance: Number(d.balance),
-      status: d.status,
-      itemsCount: d.items.length,
-      createdAt: d.createdAt,
+    recentTasks: recentTasks.map((t) => ({
+      id: t.id,
+      title: t.title,
+      priority: t.priority,
+      dueDate: t.dueDate,
+      createdAt: t.createdAt,
+      author: t.author,
+      group: t.group,
+      reviewedBy: t.reviewedBy,
+      reviewedAt: t.reviewedAt,
+      isReviewed: t.reviewedById !== null,
+      commentsCount: t._count.comments,
+      activityCount: t._count.activityLogs,
+    })),
+    groupTaskCounts: groupTaskCounts.map((g) => ({
+      id: g.id,
+      name: g.name,
+      taskCount: g._count.tasks,
+      memberCount: g._count.members,
     })),
     monthlyData,
   });

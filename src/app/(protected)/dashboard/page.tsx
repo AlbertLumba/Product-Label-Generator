@@ -8,45 +8,51 @@ import type { ApiResponse } from "@/lib/api/types";
 
 export interface DashboardData {
   stats: {
-    totalDebts: number;
-    activeDebts: number;
-    paidDebts: number;
-    cancelledDebts: number;
-    totalAmount: number;
-    totalBalance: number;
-    totalCollected: number;
-    totalPayments: number;
-    totalPaymentAmount: number;
-    collectionRate: number;
+    totalTasks: number;
+    reviewedTasks: number;
+    pendingReview: number;
+    overdueTasks: number;
+    totalGroups: number;
+    totalUsers: number;
+    priorityStats: Record<string, number>;
   };
-  topDebts: {
+  pendingReviewTasks: {
     id: string;
-    debtorName: string;
-    debtorEmail: string | null;
-    accessCode: string;
-    totalAmount: number;
-    balance: number;
-    status: string;
-    itemsCount: number;
-    lastPayment: { amount: number; date: string } | null;
-  }[];
-  recentPayments: {
-    id: string;
-    amount: number;
-    paymentDate: string;
-    method: string;
-    notes: string | null;
-    debt: { id: string; debtorName: string; accessCode: string };
-  }[];
-  recentDebts: {
-    id: string;
-    debtorName: string;
-    accessCode: string;
-    totalAmount: number;
-    balance: number;
-    status: string;
-    itemsCount: number;
+    title: string;
+    priority: string;
+    dueDate: string | null;
     createdAt: string;
+    author: { id: string; name: string; email: string };
+    group: { id: string; name: string } | null;
+    commentsCount: number;
+    activityCount: number;
+  }[];
+  recentActivity: {
+    id: string;
+    action: string;
+    createdAt: string;
+    actor: { id: string; name: string; role: string };
+    task: { id: string; title: string };
+  }[];
+  recentTasks: {
+    id: string;
+    title: string;
+    priority: string;
+    dueDate: string | null;
+    createdAt: string;
+    author: { id: string; name: string; email: string };
+    group: { id: string; name: string } | null;
+    reviewedBy: { id: string; name: string } | null;
+    reviewedAt: string | null;
+    isReviewed: boolean;
+    commentsCount: number;
+    activityCount: number;
+  }[];
+  groupTaskCounts: {
+    id: string;
+    name: string;
+    taskCount: number;
+    memberCount: number;
   }[];
   monthlyData: Record<string, number>;
 }

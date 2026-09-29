@@ -1,176 +1,264 @@
 // prisma/seed.ts
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import { PrismaClient, Role, Priority } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
-// ─── Raw data pulled from Sheet3: Aug 10 group + Aug 3 (2nd) group ───
-
-const AUG_10 = new Date('2026-08-10');
-const AUG_3 = new Date('2026-08-03');
-
-interface RawEntry {
-  name: string;
-  amount: number;
-  paid: boolean;
-  date: Date;
-}
-
-const rawEntries: RawEntry[] = [
-  // Aug 10 group
-  { name: 'Jasmin', amount: 194, paid: false, date: AUG_10 },
-  { name: 'Shan', amount: 47, paid: false, date: AUG_10 },
-  { name: 'Star', amount: 119, paid: true, date: AUG_10 },
-  { name: 'Vinz', amount: 196, paid: true, date: AUG_10 },
-  { name: 'Jem', amount: 155, paid: true, date: AUG_10 },
-  { name: 'Rev', amount: 117, paid: true, date: AUG_10 },
-  { name: 'Lawrence', amount: 117, paid: true, date: AUG_10 },
-
-  // Aug 3 (2nd) group
-  { name: 'Tene', amount: 162, paid: true, date: AUG_3 },
-  { name: 'Norman', amount: 164, paid: true, date: AUG_3 },
-  { name: 'Jer', amount: 162, paid: true, date: AUG_3 },
-  { name: 'Ber', amount: 98, paid: true, date: AUG_3 },
-  { name: 'Star', amount: 105, paid: true, date: AUG_3 },
-  { name: 'Shan', amount: 162, paid: false, date: AUG_3 },
-  { name: 'Pat C', amount: 162, paid: true, date: AUG_3 },
-  { name: 'Artem', amount: 162, paid: true, date: AUG_3 },
-  { name: 'Vinz', amount: 178, paid: true, date: AUG_3 },
-  { name: 'Bago', amount: 178, paid: false, date: AUG_3 },
-  { name: 'Mhay', amount: 200, paid: true, date: AUG_3 },
-  { name: 'Jasmin', amount: 223, paid: false, date: AUG_3 },
-];
-
-// ─── Group entries by debtor name ───
-
-function groupByName(entries: RawEntry[]): Map<string, RawEntry[]> {
-  const map = new Map<string, RawEntry[]>();
-  for (const entry of entries) {
-    const existing = map.get(entry.name);
-    if (existing) {
-      existing.push(entry);
-    } else {
-      map.set(entry.name, [entry]);
-    }
-  }
-  return map;
-}
-
-// ─── Access code generator (mirrors /api/debts/register logic) ───
-
-const usedCodes = new Set<string>();
-
-function generateAccessCode(debtorName: string): string {
-  const base = debtorName
-    .replace(/[^a-zA-Z0-9]/g, '')
-    .toUpperCase();
-
-  if (!usedCodes.has(base)) {
-    usedCodes.add(base);
-    return base;
-  }
-
-  // Same name already used as a code within this seed run —
-  // append an incrementing number, still fully derived from the name.
-  for (let n = 2; n < 100; n++) {
-    const code = `${base}${n}`;
-    if (!usedCodes.has(code)) {
-      usedCodes.add(code);
-      return code;
-    }
-  }
-
-  throw new Error(`Could not generate a unique access code for ${debtorName}`);
-}
-
 async function main() {
-  // Clean existing data in correct order (respect foreign keys)
-  console.log('🧹 Cleaning existing data...');
-  await prisma.itemPayment.deleteMany();
-  await prisma.payment.deleteMany();
-  await prisma.debtItem.deleteMany();
-  await prisma.debt.deleteMany();
+  // ─── Clean existing data (respect FK order) ───
+  console.log("🧹 Cleaning existing data...");
+  await prisma.activityLog.deleteMany();
+  await prisma.comment.deleteMany();
+  await prisma.task.deleteMany();
+  await prisma.userGroup.deleteMany();
+  await prisma.group.deleteMany();
   await prisma.user.deleteMany();
-  console.log('✅ All existing data removed');
+  console.log("✅ All existing data removed");
 
-  // Create admin user
-  const hashedPassword = await bcrypt.hash('123123', 10);
-
+  // ─── Admin ───
+  const adminPassword = await bcrypt.hash("123123", 10);
   const admin = await prisma.user.create({
     data: {
-      name: 'Admin',
-      email: 'admin@example.com',
-      passwordHash: hashedPassword,
+      name: "Admin",
+      email: "admin@example.com",
+      passwordHash: adminPassword,
+      role: Role.ADMIN,
+    },
+  });
+  console.log("👤 Admin created:", admin.email);
+
+  // ─── Regular users ───
+  const userPassword = await bcrypt.hash("123123", 10);
+
+  const userNames = [
+    "Jasmin",
+    "Shan",
+    "Star",
+    "Vinz",
+    "Jem",
+    "Rev",
+    "Lawrence",
+    "Tene",
+    "Norman",
+    "Jer",
+    "Ber",
+    "Pat C",
+    "Artem",
+    "Bago",
+    "Mhay",
+  ];
+
+  const users = [];
+  for (const name of userNames) {
+    const u = await prisma.user.create({
+      data: {
+        name,
+        email: `${name.toLowerCase().replace(/\s+/g, ".")}@example.com`,
+        passwordHash: userPassword,
+        role: Role.USER,
+      },
+    });
+    users.push(u);
+  }
+  console.log(`👥 ${users.length} users created`);
+
+  // ─── Groups ───
+  const aug10Group = await prisma.group.create({
+    data: {
+      name: "Aug 10 Group",
+      description: "Team working on the Aug 10 batch",
     },
   });
 
-  console.log('👤 Admin created:', admin.email);
+  const aug3Group = await prisma.group.create({
+    data: {
+      name: "Aug 3 Group",
+      description: "Team working on the Aug 3 batch",
+    },
+  });
+  console.log("🗂️  2 groups created");
 
-  // ─── Seed debts from Aug 3 / Aug 10 data ───
+  // ─── Assign users to groups ───
+  const aug10Members = [
+    "Jasmin",
+    "Shan",
+    "Star",
+    "Vinz",
+    "Jem",
+    "Rev",
+    "Lawrence",
+  ];
+  const aug3Members = [
+    "Tene",
+    "Norman",
+    "Jer",
+    "Ber",
+    "Star",
+    "Shan",
+    "Pat C",
+    "Artem",
+    "Vinz",
+    "Bago",
+    "Mhay",
+    "Jasmin",
+  ];
 
-  const grouped = groupByName(rawEntries);
-  let debtsCreated = 0;
+  const userByName = new Map(users.map((u) => [u.name, u]));
 
-  for (const [name, entries] of grouped) {
-    const items = entries.map((e) => ({
-      itemName: 'item',
-      quantity: 1,
-      unitPrice: e.amount,
-      totalPrice: e.amount,
-      paidAmount: e.paid ? e.amount : 0,
-      purchasedAt: e.date,
-      payments: e.paid
-        ? {
-            create: [
-              {
-                amount: e.amount,
-                method: 'OTHER' as const,
-                paymentDate: e.date,
-              },
-            ],
-          }
-        : undefined,
-    }));
-
-    const totalAmount = items.reduce((sum, i) => sum + i.totalPrice, 0);
-    const totalPaid = items.reduce((sum, i) => sum + i.paidAmount, 0);
-    const balance = totalAmount - totalPaid;
-    const status = balance <= 0 ? 'PAID' : 'ACTIVE';
-
-    const debtLevelPayments = entries
-      .filter((e) => e.paid)
-      .map((e) => ({
-        amount: e.amount,
-        method: 'OTHER' as const,
-        paymentDate: e.date,
-      }));
-
-    const accessCode = generateAccessCode(name);
-
-    await prisma.debt.create({
-      data: {
-        debtorName: name,
-        accessCode,
-        totalAmount,
-        balance,
-        status,
-        items: { create: items },
-        payments: { create: debtLevelPayments },
-      },
-    });
-
-    debtsCreated++;
+  const memberships: { userId: string; groupId: string }[] = [];
+  for (const name of aug10Members) {
+    const u = userByName.get(name);
+    if (u) memberships.push({ userId: u.id, groupId: aug10Group.id });
+  }
+  for (const name of aug3Members) {
+    const u = userByName.get(name);
+    if (u) memberships.push({ userId: u.id, groupId: aug3Group.id });
   }
 
-  console.log(`💸 ${debtsCreated} debts created from Aug 3 / Aug 10 data`);
-  console.log('\n✅ Seed completed!');
-  console.log('   - 1 Admin (admin@example.com / admin123)');
-  console.log(`   - ${debtsCreated} Debts`);
+  await prisma.userGroup.createMany({ data: memberships });
+  console.log(`🔗 ${memberships.length} group memberships created`);
+
+  // ─── Sample tasks ───
+  // Each user creates their own task; admin will "monitor" them.
+  const sampleTasks: {
+    author: string;
+    groupId: string;
+    title: string;
+    description: string;
+    priority: Priority;
+    dueDate: Date;
+  }[] = [
+    {
+      author: "Jasmin",
+      groupId: aug10Group.id,
+      title: "Prepare Aug 10 inventory list",
+      description:
+        "Compile the full list of items for the Aug 10 batch and verify counts.",
+      priority: Priority.HIGH,
+      dueDate: new Date("2026-08-08"),
+    },
+    {
+      author: "Shan",
+      groupId: aug10Group.id,
+      title: "Coordinate with supplier",
+      description:
+        "Confirm delivery schedule with the supplier for the Aug 10 batch.",
+      priority: Priority.MEDIUM,
+      dueDate: new Date("2026-08-09"),
+    },
+    {
+      author: "Star",
+      groupId: aug10Group.id,
+      title: "QA check on received items",
+      description:
+        "Inspect all items received and log any damages or discrepancies.",
+      priority: Priority.URGENT,
+      dueDate: new Date("2026-08-09"),
+    },
+    {
+      author: "Vinz",
+      groupId: aug10Group.id,
+      title: "Update tracking spreadsheet",
+      description:
+        "Reflect the latest counts and statuses in the shared tracking sheet.",
+      priority: Priority.LOW,
+      dueDate: new Date("2026-08-11"),
+    },
+    {
+      author: "Tene",
+      groupId: aug3Group.id,
+      title: "Reconcile Aug 3 deliveries",
+      description:
+        "Match deliveries against the Aug 3 order forms and flag mismatches.",
+      priority: Priority.HIGH,
+      dueDate: new Date("2026-08-05"),
+    },
+    {
+      author: "Norman",
+      groupId: aug3Group.id,
+      title: "Archive Aug 3 documents",
+      description: "Scan and archive all Aug 3 receipts and delivery notes.",
+      priority: Priority.MEDIUM,
+      dueDate: new Date("2026-08-06"),
+    },
+    {
+      author: "Jer",
+      groupId: aug3Group.id,
+      title: "Follow up on unpaid entries",
+      description: "Contact the 3 unpaid debtors and record their responses.",
+      priority: Priority.URGENT,
+      dueDate: new Date("2026-08-07"),
+    },
+    {
+      author: "Ber",
+      groupId: aug3Group.id,
+      title: "Print summary report",
+      description: "Generate and print the Aug 3 summary report for the admin.",
+      priority: Priority.LOW,
+      dueDate: new Date("2026-08-08"),
+    },
+  ];
+
+  for (const t of sampleTasks) {
+    const author = userByName.get(t.author);
+    if (!author) continue;
+
+    await prisma.task.create({
+      data: {
+        title: t.title,
+        description: t.description,
+        priority: t.priority,
+        dueDate: t.dueDate,
+        authorId: author.id,
+        groupId: t.groupId,
+        activityLogs: {
+          create: {
+            actorId: author.id,
+            action: "CREATED",
+            metadata: { source: "seed" },
+          },
+        },
+      },
+    });
+  }
+  console.log(`📝 ${sampleTasks.length} sample tasks created`);
+
+  // ─── Admin reviews one task as a demo ───
+  const firstTask = await prisma.task.findFirst({
+    where: { author: { name: "Jasmin" } },
+    orderBy: { createdAt: "asc" },
+  });
+
+  if (firstTask) {
+    await prisma.task.update({
+      where: { id: firstTask.id },
+      data: {
+        reviewedById: admin.id,
+        reviewedAt: new Date(),
+        reviewNotes: "Reviewed during seed. Looks complete.",
+        activityLogs: {
+          create: {
+            actorId: admin.id,
+            action: "REVIEWED",
+            metadata: { source: "seed" },
+          },
+        },
+      },
+    });
+    console.log("🔍 Admin reviewed one task as a demo");
+  }
+
+  console.log("\n✅ Seed completed!");
+  console.log("   - Admin login: admin@example.com / 123123");
+  console.log(
+    `   - ${users.length} user logins (e.g. jasmin@example.com / 123123)`,
+  );
+  console.log(`   - ${sampleTasks.length} tasks`);
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seed failed:', e);
+    console.error("❌ Seed failed:", e);
     process.exit(1);
   })
   .finally(async () => {

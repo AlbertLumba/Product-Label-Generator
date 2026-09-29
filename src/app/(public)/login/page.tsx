@@ -2,48 +2,57 @@
 // 📁 src/app/(public)/login/page.tsx
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-"use client";
+'use client'
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { api } from "@/lib/api/client";
-import { Card } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
-import { Alert } from "@/components/ui/Alert";
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { api } from '@/lib/api/client'
+import { Card } from '@/components/ui/Card'
+import { Input } from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
+import { Alert } from '@/components/ui/Alert'
+import type { SessionUser } from '@/lib/auth'
+import type { NavItem } from '@/lib/nav'
+
+interface LoginResponse {
+  user: SessionUser
+  nav: NavItem[]
+}
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+    e.preventDefault()
+    if (loading) return
 
-    if (loading) return; // Prevent double submit
-
-    setError("");
-    setLoading(true);
+    setError('')
+    setLoading(true)
 
     try {
-      const res = await api.post<{
-        user: { id: string; email: string; name: string };
-      }>("/api/auth/login", { email, password });
+      const res = await api.post<LoginResponse>('/api/auth/login', {
+        email,
+        password,
+      })
 
-      if (!res.success) {
-        setError(res.message);
-        return;
+      if (!res.success || !res.data) {
+        setError(res.message)
+        return
       }
 
-      router.push("/dashboard");
-      router.refresh();
+      // The cookie is now set. The protected layout will re-hydrate
+      // AuthProvider with the server-side user + nav on the next render.
+      router.push('/dashboard')
+      router.refresh()
     } catch {
-      setError("Network error. Please try again.");
+      setError('Network error. Please try again.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
@@ -94,32 +103,11 @@ export default function LoginPage() {
               loading={loading}
               className="w-full"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? 'Signing in...' : 'Sign in'}
             </Button>
           </form>
-
-          <div className="flex items-center gap-3 my-5">
-            <div className="h-px flex-1 bg-[var(--gw-border,theme(colors.gray.200))] dark:bg-gray-800" />
-            <span className="font-mono text-[11px] uppercase tracking-[0.05em] text-[var(--gw-muted)]">
-              or
-            </span>
-            <div className="h-px flex-1 bg-[var(--gw-border,theme(colors.gray.200))] dark:bg-gray-800" />
-          </div>
-
-          <Link href="/track" className="block">
-            <Button
-              type="button"
-              variant="primary"
-              size="md"
-              className="w-full !bg-transparent !text-[var(--gw-text)] border border-[var(--gw-text)] hover:!bg-[var(--gw-text)]/10"
-            >
-              Track Your Debt
-            </Button>
-          </Link>
         </Card>
-
-       
       </div>
     </div>
-  );
+  )
 }

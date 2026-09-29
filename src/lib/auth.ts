@@ -2,12 +2,8 @@
 // 📁 src/lib/auth.ts
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //
-// NOTE: the debt-tracker schema has no `Session` model, so sessions
-// here are a stateless signed cookie (userId + expiry, HMAC-signed)
-// instead of a DB-backed session row. That means logout only clears
-// the cookie client-side — it can't be revoked server-side before
-// expiry. If you need server-side revocation, add a `Session` model
-// back to schema.prisma and swap this for DB-backed sessions.
+// Stateless signed-cookie session (HMAC, no DB row).
+// Logout only clears the cookie client-side.
 
 import prisma from '@/lib/prisma'
 import crypto from 'crypto'
@@ -17,6 +13,15 @@ import { cookies } from 'next/headers'
 const SESSION_COOKIE = 'session_token'
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7 // 1 week
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret-change-me'
+
+export type Role = 'ADMIN' | 'USER'
+
+export interface SessionUser {
+  id: string
+  email: string | null
+  name: string
+  role: Role
+}
 
 interface SessionPayload {
   userId: string
@@ -41,17 +46,24 @@ function verify(token: string): SessionPayload | null {
     .update(body)
     .digest('base64url')
 
-  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
+  try {
+    if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
+      return null
+    }
+  } catch {
     return null
   }
 
-  const payload = JSON.parse(Buffer.from(body, 'base64url').toString()) as SessionPayload
-  if (payload.exp < Date.now()) return null
-
-  return payload
+  try {
+    const payload = JSON.parse(Buffer.from(body, 'base64url').toString()) as SessionPayload
+    if (payload.exp < Date.now()) return null
+    return payload
+  } catch {
+    return null
+  }
 }
 
-export async function getUser() {
+export async function getUser(): Promise<SessionUser | null> {
   try {
     const cookieStore = await cookies()
     const token = cookieStore.get(SESSION_COOKIE)?.value
@@ -60,13 +72,17 @@ export async function getUser() {
     const payload = verify(token)
     if (!payload) return null
 
-    const user = await prisma.user.findUnique({ where: { id: payload.userId } })
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { id: true, email: true, name: true, role: true },
+    })
     if (!user) return null
 
     return {
       id: user.id,
       email: user.email,
       name: user.name,
+      role: user.role as Role,
     }
   } catch (error) {
     console.error('getUser error:', error)

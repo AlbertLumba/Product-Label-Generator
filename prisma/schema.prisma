@@ -3,88 +3,138 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// ─────────────────────────────────────────────
+// MODELS
+// ─────────────────────────────────────────────
 
 model User {
   id           String   @id @default(cuid())
   name         String
-  email        String?  @unique
+  email        String   @unique
   passwordHash String
+  role         Role     @default(USER)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  // Relations
+  tasks         Task[]        @relation("TaskAuthor")
+  reviewedTasks Task[]        @relation("TaskReviewer")
+  userGroups    UserGroup[]
+  comments      Comment[]
+  activityLogs  ActivityLog[]
 
   @@map("users")
 }
 
-model Debt {
-  id          String     @id @default(cuid())
-  debtorName  String
-  debtorEmail String?
-  accessCode  String
-  totalAmount Decimal    @db.Decimal(10, 2)
-  balance     Decimal    @db.Decimal(10, 2)
-  status      DebtStatus @default(ACTIVE)
-  notes       String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  items       DebtItem[]
-  payments    Payment[]
-
-  @@index([debtorName, accessCode])
-  @@map("debts")
-}
-
-model DebtItem {
-  id          String        @id @default(cuid())
-  debtId      String
-  itemName    String
+model Group {
+  id          String   @id @default(cuid())
+  name        String   @unique
   description String?
-  quantity    Int           @default(1)
-  unitPrice   Decimal       @db.Decimal(10, 2)
-  totalPrice  Decimal       @db.Decimal(10, 2)
-  purchasedAt DateTime      @default(now())
-  paidAmount  Decimal       @default(0) @db.Decimal(10, 2)
-  debt        Debt          @relation(fields: [debtId], references: [id], onDelete: Cascade)
-  payments    ItemPayment[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  @@map("debt_items")
+  members UserGroup[]
+  tasks   Task[]
+
+  @@map("groups")
 }
 
-model ItemPayment {
-  id          String        @id @default(cuid())
-  itemId      String
-  amount      Decimal       @db.Decimal(10, 2)
-  paymentDate DateTime      @default(now())
-  method      PaymentMethod
-  notes       String?
-  item        DebtItem      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+model UserGroup {
+  id       String   @id @default(cuid())
+  userId   String
+  groupId  String
+  joinedAt DateTime @default(now())
 
-  @@map("item_payments")
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+  @@map("user_groups")
 }
 
-model Payment {
-  id          String        @id @default(cuid())
-  debtId      String
-  amount      Decimal       @db.Decimal(10, 2)
-  paymentDate DateTime      @default(now())
-  method      PaymentMethod
-  notes       String?
-  debt        Debt          @relation(fields: [debtId], references: [id], onDelete: Cascade)
+model Task {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  priority    Priority @default(MEDIUM)
 
-  @@map("payments")
+  // The user who created/owns this task
+  authorId String
+  author   User   @relation("TaskAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  // Optional group context
+  groupId String?
+  group   Group?  @relation(fields: [groupId], references: [id])
+
+  // Admin review / monitoring
+  reviewedById String?
+  reviewedBy   User?     @relation("TaskReviewer", fields: [reviewedById], references: [id])
+  reviewedAt   DateTime?
+  reviewNotes  String?
+
+  dueDate     DateTime?
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  comments     Comment[]
+  activityLogs ActivityLog[]
+
+  @@index([authorId])
+  @@index([groupId])
+  @@index([reviewedById])
+  @@map("tasks")
 }
 
-enum DebtStatus {
-  ACTIVE
-  PAID
-  CANCELLED
+model Comment {
+  id        String   @id @default(cuid())
+  taskId    String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("comments")
 }
 
-enum PaymentMethod {
-  CASH
-  BANK_TRANSFER
-  E_WALLET
-  OTHER
+model ActivityLog {
+  id        String   @id @default(cuid())
+  taskId    String
+  actorId   String
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  task  Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  actor User @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([actorId])
+  @@map("activity_logs")
 }

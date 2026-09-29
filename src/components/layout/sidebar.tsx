@@ -1,59 +1,73 @@
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 📁 src/components/layout/sidebar.tsx
-"use client";
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-import { useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
-  Wallet,
-  CreditCard,
+  ListChecks,
+  FolderKanban,
+  Users,
+  Activity,
+  Settings,
   ChevronLeft,
   ChevronRight,
-} from "lucide-react";
+} from 'lucide-react'
+import { useAuth } from '@/components/providers/AuthProvider'
+import type { NavIcon } from '@/lib/nav'
 
-const menu = [
-  { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
-  { label: "Debts", path: "/debts", icon: Wallet },
-  { label: "Payments", path: "/payments", icon: CreditCard },
-];
+const ICON_MAP: Record<NavIcon, React.ElementType> = {
+  dashboard: LayoutDashboard,
+  tasks: ListChecks,
+  groups: FolderKanban,
+  users: Users,
+  activity: Activity,
+  settings: Settings,
+}
 
 export default function Sidebar() {
-  const [expanded, setExpanded] = useState(false);
-  const pathname = usePathname();
+  const [expanded, setExpanded] = useState(false)
+  const pathname = usePathname()
+  const { nav } = useAuth()
 
   return (
     <aside
       className={`fixed left-0 top-16 bottom-0 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 z-40 flex flex-col transition-all duration-200 ${
-        expanded ? "w-56" : "w-16"
+        expanded ? 'w-56' : 'w-16'
       }`}
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
     >
       <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
-        {menu.map((item) => {
+        {nav.map((item) => {
           const active =
-            pathname === item.path || pathname.startsWith(item.path + "/");
-          const Icon = item.icon;
+            pathname === item.path || pathname.startsWith(item.path + '/')
+          const Icon = ICON_MAP[item.icon] ?? LayoutDashboard
 
           return (
             <Link key={item.path} href={item.path}>
               <div
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   active
-                    ? "bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300"
-                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
+                    ? 'bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 <Icon size={18} className="shrink-0" />
                 <span
-                  className={`whitespace-nowrap ${expanded ? "opacity-100" : "opacity-0 hidden"}`}
+                  className={`whitespace-nowrap ${
+                    expanded ? 'opacity-100' : 'opacity-0 hidden'
+                  }`}
                 >
                   {item.label}
                 </span>
               </div>
             </Link>
-          );
+          )
         })}
       </nav>
 
@@ -66,5 +80,5 @@ export default function Sidebar() {
         </button>
       </div>
     </aside>
-  );
+  )
 }
