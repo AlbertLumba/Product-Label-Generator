@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { Plus, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Textarea } from "@/components/ui/Textarea";
+import { Textarea } from "@/components/ui/TextArea";
 import { Select } from "@/components/ui/Select";
 import { Alert } from "@/components/ui/Alert";
 import { useToast } from "@/components/ui/Toast";

@@ -1,4 +1,6 @@
-// src/app/(protected)/tasks/[id]/components/TaskDetailClient.tsx
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📁 src/app/(protected)/tasks/[id]/components/TaskDetailClient.tsx
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 "use client";
 
@@ -20,10 +22,11 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Divider } from "@/components/ui/Divider";
-import { Textarea } from "@/components/ui/Textarea";
+import { Textarea } from "@/components/ui/TextArea";
 import { Alert } from "@/components/ui/Alert";
 import { useToast } from "@/components/ui/Toast";
 import type { TaskDetail } from "../page";
+import type { SessionUser } from "@/lib/auth";
 
 const priorityVariant: Record<
   TaskDetail["priority"],
@@ -41,13 +44,16 @@ const formatDate = (v: string | null, withTime = false) =>
         year: "numeric",
         month: "short",
         day: "numeric",
-        ...(withTime
-          ? { hour: "2-digit", minute: "2-digit" }
-          : {}),
+        ...(withTime ? { hour: "2-digit", minute: "2-digit" } : {}),
       })
     : "—";
 
-export function TaskDetailClient({ task: initialTask }: { task: TaskDetail }) {
+interface Props {
+  task: TaskDetail;
+  currentUser: SessionUser | null;
+}
+
+export function TaskDetailClient({ task: initialTask, currentUser }: Props) {
   const router = useRouter();
   const toast = useToast();
 
@@ -59,8 +65,9 @@ export function TaskDetailClient({ task: initialTask }: { task: TaskDetail }) {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const isAdmin = task.author.role !== "USER" ? true : false; // you can improve this by passing current user
-  // ↑ Replace with real current user check — see note below.
+  const isAdmin = currentUser?.role === "ADMIN";
+  const isAuthor = currentUser?.id === task.author.id;
+  const canEdit = isAdmin || (isAuthor && !task.isReviewed);
 
   const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,7 +88,10 @@ export function TaskDetailClient({ task: initialTask }: { task: TaskDetail }) {
       setComment("");
       toast.success("Comment posted");
     } catch (err) {
-      toast.error("Comment failed", err instanceof Error ? err.message : "Unknown");
+      toast.error(
+        "Comment failed",
+        err instanceof Error ? err.message : "Unknown"
+      );
     } finally {
       setPostingComment(false);
     }
@@ -134,7 +144,10 @@ export function TaskDetailClient({ task: initialTask }: { task: TaskDetail }) {
       toast.success("Task deleted");
       router.push("/tasks");
     } catch (err) {
-      toast.error("Delete failed", err instanceof Error ? err.message : "Unknown");
+      toast.error(
+        "Delete failed",
+        err instanceof Error ? err.message : "Unknown"
+      );
     } finally {
       setDeleting(false);
     }
@@ -176,15 +189,17 @@ export function TaskDetailClient({ task: initialTask }: { task: TaskDetail }) {
             </h1>
           </div>
         </div>
-        <Button
-          variant="danger"
-          size="sm"
-          icon={<Trash2 size={13} />}
-          onClick={handleDelete}
-          loading={deleting}
-        >
-          Delete
-        </Button>
+        {canEdit && (
+          <Button
+            variant="danger"
+            size="sm"
+            icon={<Trash2 size={13} />}
+            onClick={handleDelete}
+            loading={deleting}
+          >
+            Delete
+          </Button>
+        )}
       </div>
 
       {error && (
@@ -233,57 +248,81 @@ export function TaskDetailClient({ task: initialTask }: { task: TaskDetail }) {
         )}
       </Card>
 
-      {/* Admin review panel */}
-      <Card className="p-5 flex flex-col gap-4">
-        <div className="flex items-center gap-2">
-          <ShieldCheck size={14} className="text-[var(--gw-fern-text)]" />
-          <p className="font-mono text-[12px] tracking-[0.1em] uppercase text-[var(--gw-sub)]">
-            Admin Review
-          </p>
-        </div>
-
-        {task.isReviewed && (
-          <div className="bg-[var(--gw-fern-bg)] border border-[var(--gw-fern-dim)] rounded-[4px] p-3 flex flex-col gap-1">
-            <p className="font-mono text-[11px] text-[var(--gw-fern-text)]">
-              Reviewed by {task.reviewedBy?.name} · {formatDate(task.reviewedAt, true)}
+      {/* Admin review panel — only for admins */}
+      {isAdmin && (
+        <Card className="p-5 flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <ShieldCheck size={14} className="text-[var(--gw-fern-text)]" />
+            <p className="font-mono text-[12px] tracking-[0.1em] uppercase text-[var(--gw-sub)]">
+              Admin Review
             </p>
-            {task.reviewNotes && (
-              <p className="font-mono text-[12px] text-[var(--gw-sub)] whitespace-pre-wrap">
-                {task.reviewNotes}
-              </p>
-            )}
           </div>
-        )}
 
-        <Textarea
-          label="Review notes"
-          placeholder="Optional feedback for the author…"
-          value={reviewNotes}
-          onChange={(e) => setReviewNotes(e.target.value)}
-          rows={3}
-        />
-
-        <div className="flex gap-2 justify-end">
           {task.isReviewed && (
-            <Button
-              variant="outline"
-              size="sm"
-              loading={reviewing}
-              onClick={() => handleReview(false)}
-            >
-              Revoke Review
-            </Button>
+            <div className="bg-[var(--gw-fern-bg)] border border-[var(--gw-fern-dim)] rounded-[4px] p-3 flex flex-col gap-1">
+              <p className="font-mono text-[11px] text-[var(--gw-fern-text)]">
+                Reviewed by {task.reviewedBy?.name} ·{" "}
+                {formatDate(task.reviewedAt, true)}
+              </p>
+              {task.reviewNotes && (
+                <p className="font-mono text-[12px] text-[var(--gw-sub)] whitespace-pre-wrap">
+                  {task.reviewNotes}
+                </p>
+              )}
+            </div>
           )}
-          <Button
-            size="sm"
-            icon={<CheckCircle2 size={13} />}
-            loading={reviewing}
-            onClick={() => handleReview(true)}
-          >
-            {task.isReviewed ? "Update Review" : "Approve"}
-          </Button>
-        </div>
-      </Card>
+
+          <Textarea
+            label="Review notes"
+            placeholder="Optional feedback for the author…"
+            value={reviewNotes}
+            onChange={(e) => setReviewNotes(e.target.value)}
+            rows={3}
+          />
+
+          <div className="flex gap-2 justify-end">
+            {task.isReviewed && (
+              <Button
+                variant="outline"
+                size="sm"
+                loading={reviewing}
+                onClick={() => handleReview(false)}
+              >
+                Revoke Review
+              </Button>
+            )}
+            <Button
+              size="sm"
+              icon={<CheckCircle2 size={13} />}
+              loading={reviewing}
+              onClick={() => handleReview(true)}
+            >
+              {task.isReviewed ? "Update Review" : "Approve"}
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {/* Non-admin view of review result (read-only) */}
+      {!isAdmin && task.isReviewed && (
+        <Card className="p-5 flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <ShieldCheck size={14} className="text-[var(--gw-fern-text)]" />
+            <p className="font-mono text-[12px] tracking-[0.1em] uppercase text-[var(--gw-sub)]">
+              Reviewed
+            </p>
+          </div>
+          <p className="font-mono text-[11px] text-[var(--gw-fern-text)]">
+            Reviewed by {task.reviewedBy?.name} ·{" "}
+            {formatDate(task.reviewedAt, true)}
+          </p>
+          {task.reviewNotes && (
+            <p className="font-mono text-[12px] text-[var(--gw-sub)] whitespace-pre-wrap">
+              {task.reviewNotes}
+            </p>
+          )}
+        </Card>
+      )}
 
       {/* Comments */}
       <Card className="p-5 flex flex-col gap-4">

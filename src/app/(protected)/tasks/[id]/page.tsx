@@ -1,6 +1,9 @@
-// src/app/(protected)/tasks/[id]/page.tsx
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📁 src/app/(protected)/tasks/[id]/page.tsx
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import { serverFetch } from "@/lib/api/server-fetch";
+import { getUser } from "@/lib/auth";
 import { TaskDetailClient } from "./components/TaskDetailClient";
 import type { ApiResponse } from "@/lib/api/types";
 
@@ -36,12 +39,17 @@ export interface TaskDetail {
 
 type Params = Promise<{ id: string }>;
 
-export default async function TaskDetailPage({ params }: { params: Params }) {
-  const { id } = await params; // ← await
+export default async function TaskDetailPage({
+  params,
+}: {
+  params: Params;
+}) {
+  const { id } = await params;
 
-  const res = await serverFetch<ApiResponse<{ task: TaskDetail }>>(
-    `/api/tasks/${id}`,
-  );
+  const [res, currentUser] = await Promise.all([
+    serverFetch<ApiResponse<{ task: TaskDetail }>>(`/api/tasks/${id}`),
+    getUser(),
+  ]);
 
   if (!res.data?.task) {
     return (
@@ -51,5 +59,5 @@ export default async function TaskDetailPage({ params }: { params: Params }) {
     );
   }
 
-  return <TaskDetailClient task={res.data.task} />;
+  return <TaskDetailClient task={res.data.task} currentUser={currentUser} />;
 }
