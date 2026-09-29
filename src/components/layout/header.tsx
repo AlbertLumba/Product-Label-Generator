@@ -58,7 +58,7 @@ export default function Header() {
 
         {/* Rest of header */}
         <div className="flex-1 px-4 flex items-center justify-between">
-          <span className="font-bold text-sm text-gw-text">JASLEND</span>
+          <span className="font-bold text-sm text-gw-text">BOSS BUGI</span>
 
           <div className="relative" ref={dropdownRef}>
             <button
