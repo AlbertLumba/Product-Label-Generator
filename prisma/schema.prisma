@@ -24,6 +24,14 @@ enum Priority {
   URGENT
 }
 
+enum GroupRole {
+  TEAM_LEADER
+  SUB_TEAM_LEADER
+  FRONTEND
+  BACKEND
+  MEMBER
+}
+
 // ─────────────────────────────────────────────
 // MODELS
 // ─────────────────────────────────────────────
@@ -38,11 +46,13 @@ model User {
   updatedAt    DateTime @updatedAt
 
   // Relations
-  tasks         Task[]        @relation("TaskAuthor")
-  reviewedTasks Task[]        @relation("TaskReviewer")
-  userGroups    UserGroup[]
-  comments      Comment[]
-  activityLogs  ActivityLog[]
+  tasks          Task[]        @relation("TaskAuthor")
+  assignedTasks  Task[]        @relation("TaskAssignee")
+  reviewedTasks  Task[]        @relation("TaskReviewer")
+  userGroups     UserGroup[]
+  ledGroups      Group[]       @relation("GroupLeader")
+  comments       Comment[]
+  activityLogs   ActivityLog[]
 
   @@map("users")
 }
@@ -51,25 +61,30 @@ model Group {
   id          String   @id @default(cuid())
   name        String   @unique
   description String?
+  leaderId    String?
+  leader      User?    @relation("GroupLeader", fields: [leaderId], references: [id], onDelete: SetNull)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   members UserGroup[]
   tasks   Task[]
 
+  @@index([leaderId])
   @@map("groups")
 }
 
 model UserGroup {
-  id       String   @id @default(cuid())
+  id       String    @id @default(cuid())
   userId   String
   groupId  String
-  joinedAt DateTime @default(now())
+  role     GroupRole @default(MEMBER)
+  joinedAt DateTime  @default(now())
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@unique([userId, groupId])
+  @@index([groupId, role])
   @@map("user_groups")
 }
 
@@ -82,6 +97,10 @@ model Task {
   // The user who created/owns this task
   authorId String
   author   User   @relation("TaskAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  // Optional assignee (TL or admin assigns)
+  assigneeId String?
+  assignee   User?   @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
 
   // Optional group context
   groupId String?
@@ -103,6 +122,7 @@ model Task {
   activityLogs ActivityLog[]
 
   @@index([authorId])
+  @@index([assigneeId])
   @@index([groupId])
   @@index([reviewedById])
   @@map("tasks")
