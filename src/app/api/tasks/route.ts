@@ -19,8 +19,18 @@ export const GET = apiHandler(async (req) => {
   );
   if (!parsed.success) return fail(400, "Invalid query", parsed.error.flatten());
 
-  const { scope, groupId, authorId, priority, reviewed, q, page, pageSize } =
-    parsed.data;
+  const {
+    scope,
+    groupId,
+    projectId,
+    authorId,
+    assigneeId,
+    priority,
+    reviewed,
+    q,
+    page,
+    pageSize,
+  } = parsed.data;
 
   const canViewAll = user.role === "ADMIN";
   const effectiveScope = canViewAll ? scope : "mine";
@@ -31,6 +41,8 @@ export const GET = apiHandler(async (req) => {
   else if (authorId) where.authorId = authorId;
 
   if (groupId) where.groupId = groupId;
+  if (projectId) where.projectId = projectId;
+  if (assigneeId) where.assigneeId = assigneeId;
   if (priority) where.priority = priority;
   if (reviewed === "true") where.reviewedById = { not: null };
   if (reviewed === "false") where.reviewedById = null;
@@ -51,7 +63,9 @@ export const GET = apiHandler(async (req) => {
       take: pageSize,
       include: {
         author: { select: { id: true, name: true, email: true } },
+        assignee: { select: { id: true, name: true } },
         group: { select: { id: true, name: true } },
+        project: { select: { id: true, name: true } },
         reviewedBy: { select: { id: true, name: true } },
         _count: { select: { comments: true, activityLogs: true } },
       },
@@ -68,7 +82,9 @@ export const GET = apiHandler(async (req) => {
       completedAt: t.completedAt,
       createdAt: t.createdAt,
       author: t.author,
+      assignee: t.assignee,
       group: t.group,
+      project: t.project,
       reviewedBy: t.reviewedBy,
       reviewedAt: t.reviewedAt,
       isReviewed: t.reviewedById !== null,
@@ -90,13 +106,49 @@ export const POST = apiHandler(async (req) => {
   if (!parsed.success)
     return fail(400, "Invalid input", parsed.error.flatten());
 
-  const { title, description, priority, groupId, dueDate } = parsed.data;
+  const {
+    title,
+    description,
+    priority,
+    groupId,
+    projectId,
+    assigneeId,
+    dueDate,
+  } = parsed.data;
 
-  if (groupId && user.role !== "ADMIN") {
-    const membership = await prisma.userGroup.findFirst({
-      where: { userId: user.id, groupId },
+  // If projectId is provided, look up its parent group
+  let resolvedGroupId = groupId ?? null;
+  if (projectId) {
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { groupId: true },
+    });
+    if (!project) return fail(404, "Project not found");
+    resolvedGroupId = project.groupId;
+  }
+
+  // Non-admin must be a member of the resolved group
+  if (resolvedGroupId && user.role !== "ADMIN") {
+    const membership = await prisma.userGroup.findUnique({
+      where: {
+        userId_groupId: { userId: user.id, groupId: resolvedGroupId },
+      },
     });
     if (!membership) return fail(403, "You are not a member of that group");
+  }
+
+  // Assignee must be a member of the resolved group
+  if (assigneeId && resolvedGroupId) {
+    const assigneeMembership = await prisma.userGroup.findUnique({
+      where: {
+        userId_groupId: { userId: assigneeId, groupId: resolvedGroupId },
+      },
+    });
+    if (!assigneeMembership) {
+      return fail(400, "Assignee must be a member of the group");
+    }
+  } else if (assigneeId && !resolvedGroupId) {
+    return fail(400, "Cannot assign a user to a task without a group");
   }
 
   const task = await prisma.task.create({
@@ -104,20 +156,28 @@ export const POST = apiHandler(async (req) => {
       title,
       description: description ?? null,
       priority,
-      groupId: groupId ?? null,
+      groupId: resolvedGroupId,
+      projectId: projectId ?? null,
+      assigneeId: assigneeId ?? null,
       dueDate: dueDate ? new Date(dueDate) : null,
       authorId: user.id,
       activityLogs: {
         create: {
           actorId: user.id,
           action: "CREATED",
-          metadata: { source: "api" },
+          metadata: {
+            source: "api",
+            assigneeId: assigneeId ?? null,
+            projectId: projectId ?? null,
+          },
         },
       },
     },
     include: {
       author: { select: { id: true, name: true, email: true } },
+      assignee: { select: { id: true, name: true } },
       group: { select: { id: true, name: true } },
+      project: { select: { id: true, name: true } },
     },
   });
 
@@ -130,7 +190,9 @@ export const POST = apiHandler(async (req) => {
       dueDate: task.dueDate,
       createdAt: task.createdAt,
       author: task.author,
+      assignee: task.assignee,
       group: task.group,
+      project: task.project,
     },
   });
 });

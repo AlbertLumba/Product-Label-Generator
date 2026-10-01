@@ -3,6 +3,7 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import { serverFetch } from "@/lib/api/server-fetch";
+import { getUser } from "@/lib/auth";
 import { TasksClient } from "./components/TasksClient";
 import type { ApiResponse } from "@/lib/api/types";
 
@@ -15,6 +16,7 @@ export interface TaskRow {
   completedAt: string | null;
   createdAt: string;
   author: { id: string; name: string; email: string };
+  assignee: { id: string; name: string } | null;
   group: { id: string; name: string } | null;
   reviewedBy: { id: string; name: string } | null;
   reviewedAt: string | null;
@@ -35,7 +37,6 @@ export interface GroupOption {
   name: string;
 }
 
-// Next.js 15: searchParams is a Promise
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function TasksPage({
@@ -43,14 +44,16 @@ export default async function TasksPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const sp = await searchParams; // ← await here
+  const sp = await searchParams;
+  const user = await getUser();
+  const isAdmin = user?.role === "ADMIN";
 
   const qs = new URLSearchParams();
   for (const [k, v] of Object.entries(sp ?? {})) {
     if (typeof v === "string") qs.set(k, v);
     else if (Array.isArray(v) && v[0]) qs.set(k, v[0]);
   }
-  if (!qs.has("scope")) qs.set("scope", "mine");
+  if (!qs.has("scope")) qs.set("scope", isAdmin ? "all" : "mine");
 
   const [tasksRes, groupsRes] = await Promise.all([
     serverFetch<ApiResponse<TasksListResponse>>(
@@ -65,6 +68,7 @@ export default async function TasksPage({
     <TasksClient
       initial={tasksRes.data ?? null}
       groups={groupsRes.data?.groups ?? []}
+      isAdmin={isAdmin}
     />
   );
 }

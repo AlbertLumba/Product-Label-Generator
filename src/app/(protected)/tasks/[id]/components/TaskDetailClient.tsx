@@ -105,7 +105,7 @@ export function TaskDetailClient({ task: initialTask, currentUser }: Props) {
     } catch (err) {
       toast.error(
         "Comment failed",
-        err instanceof Error ? err.message : "Unknown"
+        err instanceof Error ? err.message : "Unknown",
       );
     } finally {
       setPostingComment(false);
@@ -162,7 +162,7 @@ export function TaskDetailClient({ task: initialTask, currentUser }: Props) {
     } catch (err) {
       toast.error(
         "Delete failed",
-        err instanceof Error ? err.message : "Unknown"
+        err instanceof Error ? err.message : "Unknown",
       );
     } finally {
       setDeleting(false);
@@ -224,8 +224,8 @@ export function TaskDetailClient({ task: initialTask, currentUser }: Props) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <MetaItem
             icon={<UserIcon size={13} />}
-            label="Author"
-            value={task.author.name}
+            label="Assignee"
+            value={task.assignee?.name ?? "Unassigned"}
           />
           <MetaItem
             icon={<FolderKanban size={13} />}
@@ -320,10 +320,7 @@ export function TaskDetailClient({ task: initialTask, currentUser }: Props) {
 
       {/* Non-admin view of review result */}
       {!isAdmin && task.isReviewed && (
-        <Card
-          className="p-5 flex flex-col gap-2"
-          accent="green"
-        >
+        <Card className="p-5 flex flex-col gap-2" accent="green">
           <div className="flex items-center gap-2">
             <ShieldCheck size={14} className="text-[var(--gw-fern-text)]" />
             <p className="font-mono text-[12px] tracking-[0.1em] uppercase text-[var(--gw-sub)]">

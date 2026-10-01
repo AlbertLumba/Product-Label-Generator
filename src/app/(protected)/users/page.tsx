@@ -15,6 +15,17 @@ export interface UserRow {
   createdAt: string;
   taskCount: number;
   groupCount: number;
+  ledGroups: { id: string; name: string }[];
+  memberships: {
+    groupId: string;
+    groupName: string;
+    groupRole:
+      | "TEAM_LEADER"
+      | "SUB_TEAM_LEADER"
+      | "FRONTEND"
+      | "BACKEND"
+      | "MEMBER";
+  }[];
 }
 
 interface UsersListResponse {

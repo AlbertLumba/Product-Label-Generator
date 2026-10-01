@@ -11,6 +11,7 @@ export interface GroupRow {
   id: string;
   name: string;
   description: string | null;
+  leader: { id: string; name: string } | null;
   memberCount: number;
   taskCount: number;
 }

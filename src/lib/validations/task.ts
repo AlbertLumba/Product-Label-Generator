@@ -21,6 +21,8 @@ export const createTaskSchema = z.object({
   description: z.string().max(5000).optional().nullable(),
   priority: PriorityEnum.default("MEDIUM"),
   groupId: z.string().optional().nullable(),
+  projectId: z.string().optional().nullable(),
+  assigneeId: z.string().optional().nullable(),
   dueDate: dateInput,
 });
 
@@ -29,6 +31,8 @@ export const updateTaskSchema = z.object({
   description: z.string().max(5000).optional().nullable(),
   priority: PriorityEnum.optional(),
   groupId: z.string().optional().nullable(),
+  projectId: z.string().optional().nullable(),
+  assigneeId: z.string().optional().nullable(),
   dueDate: dateInput,
   completedAt: z.string().optional().nullable(),
 });
@@ -45,7 +49,9 @@ export const createCommentSchema = z.object({
 export const listTasksQuerySchema = z.object({
   scope: z.enum(["mine", "all"]).default("mine"),
   groupId: z.string().optional(),
+  projectId: z.string().optional(),
   authorId: z.string().optional(),
+  assigneeId: z.string().optional(),
   priority: PriorityEnum.optional(),
   reviewed: z.enum(["true", "false"]).optional(),
   q: z.string().max(200).optional(),

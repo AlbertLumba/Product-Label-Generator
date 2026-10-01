@@ -16,6 +16,7 @@ import {
   Mail,
   ListChecks,
   FolderKanban,
+  Crown,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -103,12 +104,12 @@ export function UsersClient({ initial }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[var(--gw-fern-bg)] border border-[var(--gw-fern-dim)] rounded-xl flex items-center justify-center">
-            <UsersIcon size={18} className="text-[var(--gw-fern-text)]" />
+          <div className="w-10 h-10 bg-gw-fern-bg border border-gw-fern-dim rounded-xl flex items-center justify-center">
+            <UsersIcon size={18} className="text-gw-fern-text" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-[var(--gw-text)]">Users</h2>
-            <p className="text-sm text-[var(--gw-sub)]">
+            <h2 className="text-lg font-semibold text-gw-text">Users</h2>
+            <p className="text-sm text-gw-sub">
               {users.length} total ·{" "}
               {users.filter((u) => u.role === "ADMIN").length} admins
             </p>
@@ -120,13 +121,13 @@ export function UsersClient({ initial }: Props) {
       </div>
 
       {/* Filters */}
-      <div className="bg-[var(--gw-bg1)] border border-[var(--gw-border)] rounded-xl p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="bg-gw-bg1 border border-gw-border rounded-xl p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
         <Input
           label="Search"
           placeholder="Search name or email..."
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          prefixNode={<Search size={13} className="text-[var(--gw-muted)]" />}
+          prefixNode={<Search size={13} className="text-gw-muted" />}
         />
         <Select
           label="Role"
@@ -140,7 +141,6 @@ export function UsersClient({ initial }: Props) {
         />
       </div>
 
-      {/* Create modal */}
       {showCreate && (
         <CreateUserModal
           onClose={() => setShowCreate(false)}
@@ -152,9 +152,9 @@ export function UsersClient({ initial }: Props) {
       )}
 
       {/* List */}
-      <div className="bg-[var(--gw-bg1)] border border-[var(--gw-border)] rounded-xl overflow-hidden">
+      <div className="bg-gw-bg1 border border-gw-border rounded-xl overflow-hidden">
         {loading && (
-          <div className="px-5 py-3 border-b border-[var(--gw-border)] text-xs font-mono text-[var(--gw-muted)]">
+          <div className="px-5 py-3 border-b border-gw-border text-xs font-mono text-gw-muted">
             Loading…
           </div>
         )}
@@ -163,15 +163,15 @@ export function UsersClient({ initial }: Props) {
           <div className="px-5 py-16 text-center">
             <UsersIcon
               size={28}
-              className="mx-auto text-[var(--gw-muted)] mb-3"
+              className="mx-auto text-gw-muted mb-3"
             />
-            <p className="font-mono text-[13px] text-[var(--gw-sub)]">
+            <p className="font-mono text-[13px] text-gw-sub">
               No users found
             </p>
           </div>
         )}
 
-        <div className="divide-y divide-[var(--gw-border)]">
+        <div className="divide-y divide-gw-border">
           {filtered.map((user) => (
             <UserRowItem
               key={user.id}
@@ -186,10 +186,6 @@ export function UsersClient({ initial }: Props) {
   );
 }
 
-// ─────────────────────────────────────────────
-// Row
-// ─────────────────────────────────────────────
-
 function UserRowItem({
   user,
   onEdit,
@@ -201,14 +197,17 @@ function UserRowItem({
 }) {
   const initials = user.name.charAt(0).toUpperCase();
   const isAdmin = user.role === "ADMIN";
+  const leadsAnyGroup = user.ledGroups.length > 0;
 
   return (
-    <div className="flex items-center gap-4 px-5 py-3.5 hover:bg-[var(--gw-bg2)] transition-colors">
+    <div className="flex items-center gap-4 px-5 py-3.5 hover:bg-gw-bg2 transition-colors">
       <div
         className={`w-9 h-9 rounded-full flex items-center justify-center font-mono text-[12px] font-semibold flex-shrink-0 ${
           isAdmin
-            ? "bg-[var(--gw-fern-bg)] border border-[var(--gw-fern-dim)] text-[var(--gw-fern-text)]"
-            : "bg-[var(--gw-bg3)] text-[var(--gw-sub)]"
+            ? "bg-gw-fern-bg border border-gw-fern-dim text-gw-fern-text"
+            : leadsAnyGroup
+              ? "bg-gw-amber-bg border border-gw-amber-dim text-gw-amber"
+              : "bg-gw-bg3 text-gw-sub"
         }`}
       >
         {initials}
@@ -216,7 +215,7 @@ function UserRowItem({
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-          <span className="font-mono text-[13px] text-[var(--gw-text)] truncate">
+          <span className="font-mono text-[13px] text-gw-text truncate">
             {user.name}
           </span>
           {isAdmin && (
@@ -224,8 +223,13 @@ function UserRowItem({
               <ShieldCheck size={10} /> Admin
             </Badge>
           )}
+          {leadsAnyGroup && !isAdmin && (
+            <Badge variant="amber" dot={false}>
+              <Crown size={10} /> Team Leader
+            </Badge>
+          )}
         </div>
-        <div className="flex items-center gap-3 text-[11px] font-mono text-[var(--gw-muted)]">
+        <div className="flex items-center gap-3 text-[11px] font-mono text-gw-muted flex-wrap">
           <span className="inline-flex items-center gap-1">
             <Mail size={10} /> {user.email}
           </span>
@@ -235,6 +239,11 @@ function UserRowItem({
           <span className="inline-flex items-center gap-1">
             <FolderKanban size={10} /> {user.groupCount} groups
           </span>
+          {leadsAnyGroup && (
+            <span className="inline-flex items-center gap-1 text-gw-fern-text">
+              <Crown size={10} /> leads {user.ledGroups.map((g) => g.name).join(", ")}
+            </span>
+          )}
         </div>
       </div>
 
@@ -252,7 +261,7 @@ function UserRowItem({
           size="sm"
           aria-label="Delete user"
           onClick={onDelete}
-          className="text-[var(--gw-red)] hover:bg-[var(--gw-red-bg)]"
+          className="text-gw-red hover:bg-gw-red-bg"
         >
           <Trash2 size={13} />
         </IconButton>
@@ -260,10 +269,6 @@ function UserRowItem({
     </div>
   );
 }
-
-// ─────────────────────────────────────────────
-// Create modal
-// ─────────────────────────────────────────────
 
 function CreateUserModal({
   onClose,
@@ -300,6 +305,8 @@ function CreateUserModal({
         ...json.data.user,
         taskCount: 0,
         groupCount: 0,
+        ledGroups: [],
+        memberships: [],
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
@@ -315,14 +322,12 @@ function CreateUserModal({
       onClick={onClose}
     >
       <div
-        className="bg-[var(--gw-bg1)] border border-[var(--gw-border)] rounded-xl w-full max-w-md p-6 flex flex-col gap-4"
+        className="bg-gw-bg1 border border-gw-border rounded-xl w-full max-w-md p-6 flex flex-col gap-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div>
-          <h3 className="font-mono text-[14px] text-[var(--gw-text)]">
-            Create User
-          </h3>
-          <p className="font-mono text-[11px] text-[var(--gw-muted)] mt-1">
+          <h3 className="font-mono text-[14px] text-gw-text">Create User</h3>
+          <p className="font-mono text-[11px] text-gw-muted mt-1">
             Add a new member to the team
           </p>
         </div>
@@ -354,16 +359,17 @@ function CreateUserModal({
             placeholder="min 6 characters"
           />
           <Select
-            label="Role"
+            label="System Role"
             value={role}
             onChange={(e) => setRole(e.target.value as "ADMIN" | "USER")}
             options={[
               { value: "USER", label: "User" },
               { value: "ADMIN", label: "Admin" },
             ]}
+            hint="Group roles are assigned per group"
           />
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-[var(--gw-border)]">
+          <div className="flex justify-end gap-2 pt-2 border-t border-gw-border">
             <Button
               type="button"
               variant="ghost"

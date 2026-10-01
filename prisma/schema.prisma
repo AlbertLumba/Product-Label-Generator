@@ -29,7 +29,16 @@ enum GroupRole {
   SUB_TEAM_LEADER
   FRONTEND
   BACKEND
+  PRODUCT_SPECIALIST
   MEMBER
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
 }
 
 // ─────────────────────────────────────────────
@@ -45,12 +54,12 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  // Relations
   tasks          Task[]        @relation("TaskAuthor")
   assignedTasks  Task[]        @relation("TaskAssignee")
   reviewedTasks  Task[]        @relation("TaskReviewer")
   userGroups     UserGroup[]
   ledGroups      Group[]       @relation("GroupLeader")
+  ledProjects    Project[]     @relation("ProjectLead")
   comments       Comment[]
   activityLogs   ActivityLog[]
 
@@ -66,8 +75,9 @@ model Group {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  members UserGroup[]
-  tasks   Task[]
+  members  UserGroup[]
+  projects Project[]
+  tasks    Task[]        // ← ADD THIS BACK
 
   @@index([leaderId])
   @@map("groups")
@@ -88,25 +98,52 @@ model UserGroup {
   @@map("user_groups")
 }
 
+model Project {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  status      ProjectStatus @default(ACTIVE)
+
+  groupId String
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  leadId String?
+  lead   User?   @relation("ProjectLead", fields: [leadId], references: [id], onDelete: SetNull)
+
+  startDate DateTime?
+  dueDate   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tasks Task[]
+
+  @@unique([groupId, name])
+  @@index([groupId])
+  @@index([leadId])
+  @@map("projects")
+}
+
 model Task {
   id          String   @id @default(cuid())
   title       String
   description String?
   priority    Priority @default(MEDIUM)
 
-  // The user who created/owns this task
   authorId String
   author   User   @relation("TaskAuthor", fields: [authorId], references: [id], onDelete: Cascade)
 
-  // Optional assignee (TL or admin assigns)
   assigneeId String?
   assignee   User?   @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
 
-  // Optional group context
-  groupId String?
-  group   Group?  @relation(fields: [groupId], references: [id])
+  // A task belongs to a project; project implicitly belongs to a group
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
-  // Admin review / monitoring
+  // Keep groupId for direct group-level tasks (optional)
+  groupId String?
+  group   Group?  @relation(fields: [groupId], references: [id], onDelete: SetNull)
+
   reviewedById String?
   reviewedBy   User?     @relation("TaskReviewer", fields: [reviewedById], references: [id])
   reviewedAt   DateTime?
@@ -123,6 +160,7 @@ model Task {
 
   @@index([authorId])
   @@index([assigneeId])
+  @@index([projectId])
   @@index([groupId])
   @@index([reviewedById])
   @@map("tasks")

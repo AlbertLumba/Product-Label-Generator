@@ -18,7 +18,9 @@ export const GET = apiHandler<{ id: string }>(async (_req, ctx) => {
     where: { id },
     include: {
       author: { select: { id: true, name: true, email: true, role: true } },
+      assignee: { select: { id: true, name: true, email: true } },
       group: { select: { id: true, name: true } },
+      project: { select: { id: true, name: true } },
       reviewedBy: { select: { id: true, name: true } },
       comments: {
         orderBy: { createdAt: "asc" },
@@ -46,7 +48,9 @@ export const GET = apiHandler<{ id: string }>(async (_req, ctx) => {
       createdAt: task.createdAt,
       updatedAt: task.updatedAt,
       author: task.author,
+      assignee: task.assignee,
       group: task.group,
+      project: task.project,
       reviewedBy: task.reviewedBy,
       reviewedAt: task.reviewedAt,
       reviewNotes: task.reviewNotes,
@@ -88,8 +92,46 @@ export const PATCH = apiHandler<{ id: string }>(async (req, ctx) => {
   if (!parsed.success)
     return fail(400, "Invalid input", parsed.error.flatten());
 
-  const { title, description, priority, groupId, dueDate, completedAt } =
-    parsed.data;
+  const {
+    title,
+    description,
+    priority,
+    groupId,
+    projectId,
+    assigneeId,
+    dueDate,
+    completedAt,
+  } = parsed.data;
+
+  // Resolve effective group/project for validation
+  let resolvedGroupId =
+    groupId !== undefined ? groupId : existing.groupId;
+
+  if (projectId !== undefined && projectId) {
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { groupId: true },
+    });
+    if (!project) return fail(404, "Project not found");
+    resolvedGroupId = project.groupId;
+  }
+
+  // Validate assignee is a member of the resolved group
+  const effectiveAssigneeId =
+    assigneeId !== undefined ? assigneeId : existing.assigneeId;
+  if (effectiveAssigneeId && resolvedGroupId) {
+    const membership = await prisma.userGroup.findUnique({
+      where: {
+        userId_groupId: {
+          userId: effectiveAssigneeId,
+          groupId: resolvedGroupId,
+        },
+      },
+    });
+    if (!membership) {
+      return fail(400, "Assignee must be a member of the group");
+    }
+  }
 
   const updated = await prisma.task.update({
     where: { id: existing.id },
@@ -98,6 +140,8 @@ export const PATCH = apiHandler<{ id: string }>(async (req, ctx) => {
       ...(description !== undefined ? { description } : {}),
       ...(priority !== undefined ? { priority } : {}),
       ...(groupId !== undefined ? { groupId } : {}),
+      ...(projectId !== undefined ? { projectId } : {}),
+      ...(assigneeId !== undefined ? { assigneeId } : {}),
       ...(dueDate !== undefined
         ? { dueDate: dueDate ? new Date(dueDate) : null }
         : {}),
@@ -114,7 +158,9 @@ export const PATCH = apiHandler<{ id: string }>(async (req, ctx) => {
     },
     include: {
       author: { select: { id: true, name: true, email: true } },
+      assignee: { select: { id: true, name: true } },
       group: { select: { id: true, name: true } },
+      project: { select: { id: true, name: true } },
     },
   });
 
@@ -127,7 +173,9 @@ export const PATCH = apiHandler<{ id: string }>(async (req, ctx) => {
       dueDate: updated.dueDate,
       completedAt: updated.completedAt,
       author: updated.author,
+      assignee: updated.assignee,
       group: updated.group,
+      project: updated.project,
     },
   });
 });

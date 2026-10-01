@@ -12,6 +12,7 @@ import {
   Search,
   MessageSquare,
   Calendar,
+  User as UserIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -30,6 +31,7 @@ import type {
 interface Props {
   initial: TasksListResponse | null;
   groups: GroupOption[];
+  isAdmin: boolean;
 }
 
 type Priority = TaskRow["priority"];
@@ -50,14 +52,17 @@ const formatDate = (v: string | null) =>
       })
     : "—";
 
-export function TasksClient({ initial, groups }: Props) {
+export function TasksClient({ initial, groups, isAdmin }: Props) {
   const router = useRouter();
   const toast = useToast();
 
   const [data, setData] = useState<TasksListResponse | null>(initial);
   const [loading, setLoading] = useState(false);
 
-  const [scope, setScope] = useState<"mine" | "all">("mine");
+  // Role-aware default: admin starts on "all", user on "mine"
+  const [scope, setScope] = useState<"mine" | "all">(
+    isAdmin ? "all" : "mine"
+  );
   const [priority, setPriority] = useState<string>("");
   const [groupFilter, setGroupFilter] = useState<string>("");
   const [reviewed, setReviewed] = useState<string>("");
@@ -144,9 +149,7 @@ export function TasksClient({ initial, groups }: Props) {
               setQ(e.target.value);
               setPage(1);
             }}
-            prefixNode={
-              <Search size={13} className="text-gw-muted" />
-            }
+            prefixNode={<Search size={13} className="text-gw-muted" />}
           />
 
           <Select
@@ -156,10 +159,14 @@ export function TasksClient({ initial, groups }: Props) {
               setScope(e.target.value as "mine" | "all");
               setPage(1);
             }}
-            options={[
-              { value: "mine", label: "My tasks" },
-              { value: "all", label: "All tasks (admin)" },
-            ]}
+            options={
+              isAdmin
+                ? [
+                    { value: "all", label: "All tasks" },
+                    { value: "mine", label: "My tasks" },
+                  ]
+                : [{ value: "mine", label: "My tasks" }]
+            }
           />
 
           <Select
@@ -331,10 +338,18 @@ function TaskRowItem({
           {task.title}
         </p>
 
-        <div className="flex items-center gap-2 mt-1">
+        <div className="flex items-center gap-2 mt-1 flex-wrap">
           <span className="font-mono text-[11px] text-gw-muted">
             by {task.author.name}
           </span>
+          {task.assignee && (
+            <>
+              <span className="text-gw-muted">·</span>
+              <span className="inline-flex items-center gap-1 font-mono text-[11px] text-gw-fern-text">
+                <UserIcon size={10} /> {task.assignee.name}
+              </span>
+            </>
+          )}
           {task.commentsCount > 0 && (
             <>
               <span className="text-gw-muted">·</span>

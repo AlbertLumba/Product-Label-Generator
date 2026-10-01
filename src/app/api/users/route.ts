@@ -40,6 +40,13 @@ export const GET = apiHandler(async (req) => {
       email: true,
       role: true,
       createdAt: true,
+      ledGroups: { select: { id: true, name: true } },
+      userGroups: {
+        select: {
+          role: true,
+          group: { select: { id: true, name: true } },
+        },
+      },
       _count: { select: { tasks: true, userGroups: true } },
     },
     orderBy: { createdAt: "desc" },
@@ -54,6 +61,12 @@ export const GET = apiHandler(async (req) => {
       createdAt: u.createdAt,
       taskCount: u._count.tasks,
       groupCount: u._count.userGroups,
+      ledGroups: u.ledGroups,
+      memberships: u.userGroups.map((ug) => ({
+        groupId: ug.group.id,
+        groupName: ug.group.name,
+        groupRole: ug.role,
+      })),
     })),
   });
 });

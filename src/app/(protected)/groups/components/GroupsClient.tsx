@@ -4,7 +4,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   FolderKanban,
@@ -12,10 +12,12 @@ import {
   Users,
   ListChecks,
   Trash2,
+  Crown,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/TextArea";
 import { IconButton } from "@/components/ui/IconButton";
 import { Alert } from "@/components/ui/Alert";
@@ -25,6 +27,12 @@ import type { GroupRow } from "../page";
 interface Props {
   initial: GroupRow[];
   isAdmin: boolean;
+}
+
+interface UserOption {
+  id: string;
+  name: string;
+  email: string;
 }
 
 export function GroupsClient({ initial, isAdmin }: Props) {
@@ -58,17 +66,12 @@ export function GroupsClient({ initial, isAdmin }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[var(--gw-fern-bg)] border border-[var(--gw-fern-dim)] rounded-xl flex items-center justify-center">
-            <FolderKanban
-              size={18}
-              className="text-[var(--gw-fern-text)]"
-            />
+          <div className="w-10 h-10 bg-gw-fern-bg border border-gw-fern-dim rounded-xl flex items-center justify-center">
+            <FolderKanban size={18} className="text-gw-fern-text" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-[var(--gw-text)]">
-              Groups
-            </h2>
-            <p className="text-sm text-[var(--gw-sub)]">
+            <h2 className="text-lg font-semibold text-gw-text">Groups</h2>
+            <p className="text-sm text-gw-sub">
               {groups.length} group{groups.length === 1 ? "" : "s"}
             </p>
           </div>
@@ -93,13 +96,8 @@ export function GroupsClient({ initial, isAdmin }: Props) {
       {/* Grid */}
       {groups.length === 0 ? (
         <Card className="p-16 text-center">
-          <FolderKanban
-            size={28}
-            className="mx-auto text-[var(--gw-muted)] mb-3"
-          />
-          <p className="font-mono text-[13px] text-[var(--gw-sub)]">
-            No groups yet
-          </p>
+          <FolderKanban size={28} className="mx-auto text-gw-muted mb-3" />
+          <p className="font-mono text-[13px] text-gw-sub">No groups yet</p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -132,14 +130,14 @@ function GroupCard({
   return (
     <div
       onClick={onClick}
-      className="bg-[var(--gw-bg1)] border border-[var(--gw-border)] rounded-xl p-4 cursor-pointer hover:border-[var(--gw-border-hi)] transition-colors flex flex-col gap-3"
+      className="bg-gw-bg1 border border-gw-border rounded-xl p-4 cursor-pointer hover:border-gw-border-hi transition-colors flex flex-col gap-3"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-[var(--gw-bg3)] flex items-center justify-center flex-shrink-0">
-            <FolderKanban size={15} className="text-[var(--gw-sub)]" />
+          <div className="w-8 h-8 rounded-lg bg-gw-bg3 flex items-center justify-center flex-shrink-0">
+            <FolderKanban size={15} className="text-gw-sub" />
           </div>
-          <p className="font-mono text-[13px] text-[var(--gw-text)] truncate">
+          <p className="font-mono text-[13px] text-gw-text truncate">
             {group.name}
           </p>
         </div>
@@ -152,20 +150,27 @@ function GroupCard({
               e.stopPropagation();
               onDelete();
             }}
-            className="text-[var(--gw-red)] hover:bg-[var(--gw-red-bg)]"
+            className="text-gw-red hover:bg-gw-red-bg"
           >
             <Trash2 size={13} />
           </IconButton>
         )}
       </div>
 
+      {group.leader && (
+        <div className="flex items-center gap-1.5 font-mono text-[11px] text-gw-fern-text">
+          <Crown size={11} />
+          <span className="truncate">TL: {group.leader.name}</span>
+        </div>
+      )}
+
       {group.description && (
-        <p className="font-mono text-[11px] text-[var(--gw-muted)] line-clamp-2">
+        <p className="font-mono text-[11px] text-gw-muted line-clamp-2">
           {group.description}
         </p>
       )}
 
-      <div className="flex items-center gap-4 font-mono text-[11px] text-[var(--gw-muted)] mt-auto">
+      <div className="flex items-center gap-4 font-mono text-[11px] text-gw-muted mt-auto">
         <span className="inline-flex items-center gap-1">
           <Users size={11} /> {group.memberCount} members
         </span>
@@ -177,6 +182,10 @@ function GroupCard({
   );
 }
 
+// ─────────────────────────────────────────────
+// Create Group Modal
+// ─────────────────────────────────────────────
+
 function CreateGroupModal({
   onClose,
   onCreated,
@@ -187,8 +196,19 @@ function CreateGroupModal({
   const toast = useToast();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [leaderId, setLeaderId] = useState<string>("");
+  const [users, setUsers] = useState<UserOption[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/users", { credentials: "include" })
+      .then((r) => r.json())
+      .then((j) => setUsers(j?.data?.users ?? []))
+      .catch(() => toast.error("Failed to load users"))
+      .finally(() => setLoadingUsers(false));
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -202,6 +222,7 @@ function CreateGroupModal({
         body: JSON.stringify({
           name: name.trim(),
           description: description.trim() || null,
+          leaderId: leaderId || null,
         }),
       });
       const json = await res.json();
@@ -209,11 +230,7 @@ function CreateGroupModal({
         throw new Error(json?.message || "Failed to create group");
       }
       toast.success("Group created", json.data.group.name);
-      onCreated({
-        ...json.data.group,
-        memberCount: 0,
-        taskCount: 0,
-      });
+      onCreated(json.data.group as GroupRow);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       setError(msg);
@@ -228,15 +245,13 @@ function CreateGroupModal({
       onClick={onClose}
     >
       <div
-        className="bg-[var(--gw-bg1)] border border-[var(--gw-border)] rounded-xl w-full max-w-md p-6 flex flex-col gap-4"
+        className="bg-gw-bg1 border border-gw-border rounded-xl w-full max-w-md p-6 flex flex-col gap-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div>
-          <h3 className="font-mono text-[14px] text-[var(--gw-text)]">
-            Create Group
-          </h3>
-          <p className="font-mono text-[11px] text-[var(--gw-muted)] mt-1">
-            Organize users into teams
+          <h3 className="font-mono text-[14px] text-gw-text">Create Group</h3>
+          <p className="font-mono text-[11px] text-gw-muted mt-1">
+            Organize users into a team with a leader
           </p>
         </div>
 
@@ -257,7 +272,25 @@ function CreateGroupModal({
             placeholder="Optional description"
             rows={3}
           />
-          <div className="flex justify-end gap-2 pt-2 border-t border-[var(--gw-border)]">
+          <Select
+            label="Team Leader (optional)"
+            value={leaderId}
+            onChange={(e) => setLeaderId(e.target.value)}
+            disabled={loadingUsers}
+            options={[
+              {
+                value: "",
+                label: loadingUsers ? "Loading users…" : "No leader yet",
+              },
+              ...users.map((u) => ({
+                value: u.id,
+                label: `${u.name} · ${u.email}`,
+              })),
+            ]}
+            hint="You can also assign later from the group page"
+          />
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-gw-border">
             <Button
               type="button"
               variant="ghost"

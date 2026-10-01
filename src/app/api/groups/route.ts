@@ -6,12 +6,7 @@ import { apiHandler } from "@/lib/api/handler";
 import { ok, fail } from "@/lib/api/server";
 import prisma from "@/lib/prisma";
 import { getUser } from "@/lib/auth";
-import { z } from "zod";
-
-const createGroupSchema = z.object({
-  name: z.string().min(1).max(100),
-  description: z.string().max(500).optional().nullable(),
-});
+import { createGroupSchema } from "@/lib/validations/group";
 
 export const GET = apiHandler(async (req) => {
   const user = await getUser();
@@ -29,6 +24,7 @@ export const GET = apiHandler(async (req) => {
       id: true,
       name: true,
       description: true,
+      leader: { select: { id: true, name: true } },
       _count: { select: { members: true, tasks: true } },
     },
     orderBy: { name: "asc" },
@@ -39,6 +35,7 @@ export const GET = apiHandler(async (req) => {
       id: g.id,
       name: g.name,
       description: g.description,
+      leader: g.leader,
       memberCount: g._count.members,
       taskCount: g._count.tasks,
     })),
@@ -55,17 +52,52 @@ export const POST = apiHandler(async (req) => {
   if (!parsed.success)
     return fail(400, "Invalid input", parsed.error.flatten());
 
-  const existing = await prisma.group.findUnique({
-    where: { name: parsed.data.name },
-  });
+  const { name, description, leaderId } = parsed.data;
+
+  const existing = await prisma.group.findUnique({ where: { name } });
   if (existing) return fail(409, "A group with that name already exists");
+
+  // If a leader was chosen, verify the user exists
+  if (leaderId) {
+    const leaderUser = await prisma.user.findUnique({
+      where: { id: leaderId },
+      select: { id: true },
+    });
+    if (!leaderUser) return fail(404, "Leader user not found");
+  }
 
   const group = await prisma.group.create({
     data: {
-      name: parsed.data.name,
-      description: parsed.data.description ?? null,
+      name,
+      description: description ?? null,
+      leaderId: leaderId ?? null,
+      // If a leader is set, upsert their membership as TEAM_LEADER
+      ...(leaderId
+        ? {
+            members: {
+              create: [
+                {
+                  userId: leaderId,
+                  role: "TEAM_LEADER",
+                },
+              ],
+            },
+          }
+        : {}),
+    },
+    include: {
+      leader: { select: { id: true, name: true } },
     },
   });
 
-  return ok({ group });
+  return ok({
+    group: {
+      id: group.id,
+      name: group.name,
+      description: group.description,
+      leader: group.leader,
+      memberCount: leaderId ? 1 : 0,
+      taskCount: 0,
+    },
+  });
 });

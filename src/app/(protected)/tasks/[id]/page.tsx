@@ -17,6 +17,7 @@ export interface TaskDetail {
   createdAt: string;
   updatedAt: string;
   author: { id: string; name: string; email: string; role: string };
+  assignee: { id: string; name: string; email: string } | null;
   group: { id: string; name: string } | null;
   reviewedBy: { id: string; name: string } | null;
   reviewedAt: string | null;
@@ -53,7 +54,7 @@ export default async function TaskDetailPage({
 
   if (!res.data?.task) {
     return (
-      <div className="px-5 py-16 text-center font-mono text-[13px] text-[var(--gw-sub)]">
+      <div className="px-5 py-16 text-center font-mono text-[13px] text-gw-sub">
         Task not found
       </div>
     );
