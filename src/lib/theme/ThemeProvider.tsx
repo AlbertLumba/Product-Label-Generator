@@ -1,6 +1,4 @@
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 📁 src/lib/theme/ThemeProvider.tsx
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// src/lib/theme/ThemeProvider.tsx
 
 "use client";
 
@@ -21,16 +19,14 @@ type ThemeContextType = {
 };
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: "dark",
+  theme: "light",
   toggleTheme: () => {},
   setTheme: () => {},
 });
 
-function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "dark";
-  const stored = localStorage.getItem("theme") as Theme | null;
-  if (stored === "dark" || stored === "light") return stored;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
+function readThemeFromDom(): Theme {
+  if (typeof document === "undefined") return "light";
+  return document.documentElement.classList.contains("dark")
     ? "dark"
     : "light";
 }
@@ -45,17 +41,23 @@ export const themeInitScript = `
     var root = document.documentElement;
     root.classList.toggle('light', theme === 'light');
     root.classList.toggle('dark', theme === 'dark');
+    root.style.colorScheme = theme;
   } catch (e) {}
 })();
 `;
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+  const [theme, setThemeState] = useState<Theme>("light");
+
+  useEffect(() => {
+    setThemeState(readThemeFromDom());
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
     root.classList.toggle("light", theme === "light");
     root.classList.toggle("dark", theme === "dark");
+    root.style.colorScheme = theme;
   }, [theme]);
 
   const toggleTheme = useCallback(() => {

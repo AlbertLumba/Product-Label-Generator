@@ -1,71 +1,74 @@
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 📁 src/app/api/auth/login/route.ts
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// src/app/api/auth/login/route.ts
 
-import { NextResponse } from 'next/server'
-import { z } from 'zod'
-import { apiHandler, getBody } from '@/lib/api/handler'
-import { validate } from '@/lib/api/validate'
-import { unauthorized } from '@/lib/api/server'
-import {
-  verifyPassword,
-  createSession,
-  sessionCookieName,
-  sessionMaxAgeSeconds,
-  type Role,
-} from '@/lib/auth'
-import { getNavForRole } from '@/lib/nav'
-import prisma from '@/lib/prisma'
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
+import bcrypt from "bcryptjs";
+import { cookies } from "next/headers";
 
-const loginSchema = z.object({
-  email: z.string().email('Invalid email'),
-  password: z.string().min(6, 'Password too short'),
-})
+export async function POST(req: Request) {
+  try {
+    const { email, password } = await req.json();
 
-export const POST = apiHandler(async (req) => {
-  const body = await getBody(req)
+    console.log("Login attempt for:", email); // Debug log
 
-  const result = validate(loginSchema, body)
-  if (!result.success) return result.response
+    if (!email || !password) {
+      return NextResponse.json(
+        { success: false, message: "Email and password required" },
+        { status: 400 }
+      );
+    }
 
-  const { email, password } = result.data
+    // Find admin in the database
+    const admin = await prisma.admin.findUnique({
+      where: { email },
+    });
 
-  const user = await prisma.user.findUnique({ where: { email } })
-  if (!user) return unauthorized('Invalid email or password')
+    if (!admin) {
+      console.log("Admin not found for email:", email);
+      return NextResponse.json(
+        { success: false, message: "Invalid credentials" },
+        { status: 401 }
+      );
+    }
 
-  const valid = await verifyPassword(password, user.passwordHash)
-  if (!valid) return unauthorized('Invalid email or password')
+    // Verify the password
+    const isValid = await bcrypt.compare(password, admin.passwordHash);
+    
+    if (!isValid) {
+      console.log("Password mismatch for:", email);
+      return NextResponse.json(
+        { success: false, message: "Invalid credentials" },
+        { status: 401 }
+      );
+    }
 
-  const role = user.role as Role
-  const token = createSession(user.id)
-  const nav = getNavForRole(role)
+    // Set the session cookie
+    const cookieStore = await cookies();
+    cookieStore.set("admin_session", admin.id, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+      path: "/",
+    });
 
-  const response = NextResponse.json(
-    {
+    console.log("Login successful for:", email);
+
+    return NextResponse.json({
       success: true,
-      code: 200,
-      message: 'Success',
       data: {
         user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role,
+          id: admin.id,
+          email: admin.email,
+          name: admin.name,
         },
-        nav,
       },
-      timestamp: new Date().toISOString(),
-    },
-    { status: 200 }
-  )
-
-  response.cookies.set(sessionCookieName, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: sessionMaxAgeSeconds,
-    path: '/',
-  })
-
-  return response
-})
+    });
+  } catch (error) {
+    // This will print the EXACT error to your terminal
+    console.error("LOGIN API CRASH:", error); 
+    return NextResponse.json(
+      { success: false, message: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

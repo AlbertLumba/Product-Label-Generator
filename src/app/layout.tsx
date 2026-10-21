@@ -1,11 +1,8 @@
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 📁 src/app/layout.tsx
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// src/app/layout.tsx
 
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider, themeInitScript } from "@/lib/theme/ThemeProvider";
-import { ToastProvider } from "@/components/ui/Toast";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -19,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GROUP 3",
-  description: "Track tasks and team activity in one place",
+  title: "Jeepney Directory — Laguna",
+  description: "Find jeepney terminals, routes, and stops in Laguna",
 };
 
 export default function RootLayout({
@@ -38,9 +35,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-full flex flex-col bg-gw-bg text-gw-text">
-        <ThemeProvider>
-          <ToastProvider>{children}</ToastProvider>
-        </ThemeProvider>
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

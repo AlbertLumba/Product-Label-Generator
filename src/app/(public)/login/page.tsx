@@ -1,23 +1,13 @@
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 📁 src/app/(public)/login/page.tsx
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// src/app/(public)/login/page.tsx
 
 'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { api } from '@/lib/api/client'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Alert } from '@/components/ui/Alert'
-import type { SessionUser } from '@/lib/auth'
-import type { NavItem } from '@/lib/nav'
-
-interface LoginResponse {
-  user: SessionUser
-  nav: NavItem[]
-}
 
 export default function LoginPage() {
   const router = useRouter()
@@ -34,18 +24,19 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const res = await api.post<LoginResponse>('/api/auth/login', {
-        email,
-        password,
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       })
 
-      if (!res.success || !res.data) {
-        setError(res.message)
+      const data = await res.json()
+
+      if (!res.ok || !data.success) {
+        setError(data.message || 'Login failed')
         return
       }
 
-      // The cookie is now set. The protected layout will re-hydrate
-      // AuthProvider with the server-side user + nav on the next render.
       router.push('/dashboard')
       router.refresh()
     } catch {
@@ -60,10 +51,10 @@ export default function LoginPage() {
       <div className="w-full max-w-md flex flex-col gap-6">
         <div className="text-center">
           <h1 className="font-mono text-[24px] tracking-[0.05em] text-[var(--gw-text)]">
-            BOSS BUGI
+            JEEPNEY ADMIN
           </h1>
           <p className="mt-2 font-mono text-[13px] text-[var(--gw-muted)]">
-            Sign in to your account
+            Sign in to manage routes
           </p>
         </div>
 
@@ -73,10 +64,7 @@ export default function LoginPage() {
 
             <Input
               label="Email"
-              id="email"
-              name="email"
               type="email"
-              autoComplete="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -85,23 +73,14 @@ export default function LoginPage() {
 
             <Input
               label="Password"
-              id="password"
-              name="password"
               type="password"
-              autoComplete="off"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
             />
 
-            <Button
-              type="submit"
-              variant="primary"
-              size="md"
-              loading={loading}
-              className="w-full"
-            >
+            <Button type="submit" variant="primary" size="md" loading={loading} className="w-full">
               {loading ? 'Signing in...' : 'Sign in'}
             </Button>
           </form>

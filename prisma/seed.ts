@@ -1,259 +1,268 @@
 // prisma/seed.ts
-import { PrismaClient, Role, Priority } from "@prisma/client";
+
+import "dotenv/config";
+import { PrismaClient } from "../src/generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({
+  connectionString: process.env.DIRECT_URL,
+});
+
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  // ─── Clean existing data (respect FK order) ───
   console.log("🧹 Cleaning existing data...");
-  await prisma.activityLog.deleteMany();
-  await prisma.comment.deleteMany();
-  await prisma.task.deleteMany();
-  await prisma.userGroup.deleteMany();
-  await prisma.group.deleteMany();
-  await prisma.user.deleteMany();
+  await prisma.routeStop.deleteMany();
+  await prisma.routeTerminal.deleteMany();
+  await prisma.fare.deleteMany();
+  await prisma.routeVariant.deleteMany();
+  await prisma.route.deleteMany();
+  await prisma.stop.deleteMany();
+  await prisma.terminal.deleteMany();
+  await prisma.city.deleteMany();
+  await prisma.admin.deleteMany();
   console.log("✅ All existing data removed");
 
   // ─── Admin ───
-  const adminPassword = await bcrypt.hash("123123", 10);
-  const admin = await prisma.user.create({
+  const passwordHash = await bcrypt.hash("admin123", 10);
+  const admin = await prisma.admin.create({
     data: {
-      name: "Admin",
       email: "admin@example.com",
-      passwordHash: adminPassword,
-      role: Role.ADMIN,
+      passwordHash: passwordHash,
+      name: "Admin",
     },
   });
-  console.log("👤 Admin created:", admin.email);
+  console.log("👤 Admin created:", admin.email, "(Password: admin123)");
 
-  // ─── Regular users ───
-  const userPassword = await bcrypt.hash("123123", 10);
+  // ─── Cities ───
+  const sanPablo = await prisma.city.create({
+    data: { name: "San Pablo", region: "Laguna" },
+  });
+  const nagcarlan = await prisma.city.create({
+    data: { name: "Nagcarlan", region: "Laguna" },
+  });
+  const liliw = await prisma.city.create({
+    data: { name: "Liliw", region: "Laguna" },
+  });
+  console.log("🏙️  3 cities created");
 
-  const userNames = [
-    "Jasmin",
-    "Shan",
-    "Star",
-    "Vinz",
-    "Jem",
-    "Rev",
-    "Lawrence",
-    "Tene",
-    "Norman",
-    "Jer",
-    "Ber",
-    "Pat C",
-    "Artem",
-    "Bago",
-    "Mhay",
+  // ─── Terminals ───
+  const terminalsData = [
+    {
+      cityId: sanPablo.id,
+      name: "San Pablo Central Terminal",
+      area: "Poblacion",
+      latitude: 14.06726,
+      longitude: 121.3007,
+    },
+    {
+      cityId: sanPablo.id,
+      name: "San Pablo Cathedral Jeep Terminal",
+      area: "Poblacion",
+      latitude: 14.0680,
+      longitude: 121.3250,
+    },
+    {
+      cityId: sanPablo.id,
+      name: "SM San Pablo Terminal",
+      area: "Poblacion",
+      latitude: 14.0715,
+      longitude: 121.3150,
+    },
+    {
+      cityId: sanPablo.id,
+      name: "San Pablo Bayan Terminal",
+      area: "Poblacion",
+      latitude: 14.0650,
+      longitude: 121.3200,
+    },
+    {
+      cityId: nagcarlan.id,
+      name: "Nagcarlan Terminal",
+      area: "Poblacion",
+      latitude: 14.1330,
+      longitude: 121.4160,
+    },
+    {
+      cityId: liliw.id,
+      name: "Liliw Terminal",
+      area: "Poblacion",
+      latitude: 14.13315,
+      longitude: 121.43126,
+    },
   ];
 
-  const users = [];
-  for (const name of userNames) {
-    const u = await prisma.user.create({
+  const terminals: Record<string, any> = {};
+  for (const data of terminalsData) {
+    const t = await prisma.terminal.create({ data });
+    terminals[t.name] = t;
+  }
+  console.log(`🏢 ${terminalsData.length} terminals created`);
+
+  // ─── Stops ───
+  const stopsData = [
+    {
+      cityId: sanPablo.id,
+      name: "San Pablo Cathedral",
+      landmark: "Cathedral / fire station",
+      latitude: 14.0680,
+      longitude: 121.3250,
+    },
+    {
+      cityId: sanPablo.id,
+      name: "San Pablo Central",
+      landmark: "City Central Terminal",
+      latitude: 14.06726,
+      longitude: 121.3007,
+    },
+    {
+      cityId: sanPablo.id,
+      name: "Real St",
+      landmark: "Calamba Public Market",
+      latitude: 14.0650,
+      longitude: 121.3150,
+    },
+    {
+      cityId: sanPablo.id,
+      name: "Maharlika Highway (Calamba Rd)",
+      landmark: "Maharlika Hwy",
+      latitude: 14.0750,
+      longitude: 121.3100,
+    },
+    {
+      cityId: nagcarlan.id,
+      name: "Nagcarlan Town Proper",
+      landmark: "Municipal Hall / church",
+      latitude: 14.1330,
+      longitude: 121.4160,
+    },
+    {
+      cityId: nagcarlan.id,
+      name: "Nagcarlan Public Market",
+      landmark: "Market",
+      latitude: 14.1300,
+      longitude: 121.4100,
+    },
+    {
+      cityId: liliw.id,
+      name: "Liliw Town Proper",
+      landmark: "Batis ng Liliw / town center",
+      latitude: 14.13315,
+      longitude: 121.43126,
+    },
+    {
+      cityId: liliw.id,
+      name: "Liliw Church",
+      landmark: "San Juan Bautista Church",
+      latitude: 14.1300,
+      longitude: 121.4300,
+    },
+  ];
+
+  const stops: Record<string, any> = {};
+  for (const data of stopsData) {
+    const s = await prisma.stop.create({ data });
+    stops[s.name] = s;
+  }
+  console.log(`📍 ${stopsData.length} stops created`);
+
+  // ─── Routes & Variants ───
+  const routesData = [
+    {
+      code: "SP-NAG",
+      name: "San Pablo – Nagcarlan",
+      start: "San Pablo Cathedral Jeep Terminal",
+      end: "Nagcarlan Terminal",
+      stops: ["San Pablo Cathedral", "Nagcarlan Town Proper"],
+    },
+    {
+      code: "SP-LIL",
+      name: "San Pablo – Liliw",
+      start: "San Pablo Cathedral Jeep Terminal",
+      end: "Liliw Terminal",
+      stops: ["San Pablo Cathedral", "Liliw Town Proper"],
+    },
+    {
+      code: "NAG-LIL",
+      name: "Nagcarlan – Liliw",
+      start: "Nagcarlan Terminal",
+      end: "Liliw Terminal",
+      stops: ["Nagcarlan Town Proper", "Liliw Town Proper"],
+    },
+    {
+      code: "SP-CEN-NAG",
+      name: "San Pablo Central – Nagcarlan",
+      start: "San Pablo Central Terminal",
+      end: "Nagcarlan Terminal",
+      stops: ["San Pablo Central", "Maharlika Highway (Calamba Rd)", "Nagcarlan Public Market"],
+    },
+    {
+      code: "SP-SM-LIL",
+      name: "SM San Pablo – Liliw",
+      start: "SM San Pablo Terminal",
+      end: "Liliw Terminal",
+      stops: ["Real St", "Liliw Church"],
+    },
+  ];
+
+  for (const r of routesData) {
+    const route = await prisma.route.create({
+      data: { code: r.code, name: r.name, cityId: sanPablo.id },
+    });
+
+    const startT = terminals[r.start];
+    const endT = terminals[r.end];
+
+    // Create variant WITHOUT geometry
+    const variant = await prisma.routeVariant.create({
       data: {
-        name,
-        email: `${name.toLowerCase().replace(/\s+/g, ".")}@example.com`,
-        passwordHash: userPassword,
-        role: Role.USER,
+        routeId: route.id,
+        name: `${r.start} → ${r.end}`,
+        direction: "OUTBOUND",
+        isDefault: true,
+        geometry: null // <-- Left null so the map auto-fetches the real road path
       },
     });
-    users.push(u);
-  }
-  console.log(`👥 ${users.length} users created`);
 
-  // ─── Groups ───
-  const aug10Group = await prisma.group.create({
-    data: {
-      name: "Aug 10 Group",
-      description: "Team working on the Aug 10 batch",
-    },
-  });
+    // Link Terminals
+    await prisma.routeTerminal.createMany({
+      data: [
+        { variantId: variant.id, terminalId: startT.id },
+        { variantId: variant.id, terminalId: endT.id },
+      ],
+    });
 
-  const aug3Group = await prisma.group.create({
-    data: {
-      name: "Aug 3 Group",
-      description: "Team working on the Aug 3 batch",
-    },
-  });
-  console.log("🗂️  2 groups created");
-
-  // ─── Assign users to groups ───
-  const aug10Members = [
-    "Jasmin",
-    "Shan",
-    "Star",
-    "Vinz",
-    "Jem",
-    "Rev",
-    "Lawrence",
-  ];
-  const aug3Members = [
-    "Tene",
-    "Norman",
-    "Jer",
-    "Ber",
-    "Star",
-    "Shan",
-    "Pat C",
-    "Artem",
-    "Vinz",
-    "Bago",
-    "Mhay",
-    "Jasmin",
-  ];
-
-  const userByName = new Map(users.map((u) => [u.name, u]));
-
-  const memberships: { userId: string; groupId: string }[] = [];
-  for (const name of aug10Members) {
-    const u = userByName.get(name);
-    if (u) memberships.push({ userId: u.id, groupId: aug10Group.id });
-  }
-  for (const name of aug3Members) {
-    const u = userByName.get(name);
-    if (u) memberships.push({ userId: u.id, groupId: aug3Group.id });
-  }
-
-  await prisma.userGroup.createMany({ data: memberships });
-  console.log(`🔗 ${memberships.length} group memberships created`);
-
-  // ─── Sample tasks ───
-  // Each user creates their own task; admin will "monitor" them.
-  const sampleTasks: {
-    author: string;
-    groupId: string;
-    title: string;
-    description: string;
-    priority: Priority;
-    dueDate: Date;
-  }[] = [
-    {
-      author: "Jasmin",
-      groupId: aug10Group.id,
-      title: "Prepare Aug 10 inventory list",
-      description:
-        "Compile the full list of items for the Aug 10 batch and verify counts.",
-      priority: Priority.HIGH,
-      dueDate: new Date("2026-08-08"),
-    },
-    {
-      author: "Shan",
-      groupId: aug10Group.id,
-      title: "Coordinate with supplier",
-      description:
-        "Confirm delivery schedule with the supplier for the Aug 10 batch.",
-      priority: Priority.MEDIUM,
-      dueDate: new Date("2026-08-09"),
-    },
-    {
-      author: "Star",
-      groupId: aug10Group.id,
-      title: "QA check on received items",
-      description:
-        "Inspect all items received and log any damages or discrepancies.",
-      priority: Priority.URGENT,
-      dueDate: new Date("2026-08-09"),
-    },
-    {
-      author: "Vinz",
-      groupId: aug10Group.id,
-      title: "Update tracking spreadsheet",
-      description:
-        "Reflect the latest counts and statuses in the shared tracking sheet.",
-      priority: Priority.LOW,
-      dueDate: new Date("2026-08-11"),
-    },
-    {
-      author: "Tene",
-      groupId: aug3Group.id,
-      title: "Reconcile Aug 3 deliveries",
-      description:
-        "Match deliveries against the Aug 3 order forms and flag mismatches.",
-      priority: Priority.HIGH,
-      dueDate: new Date("2026-08-05"),
-    },
-    {
-      author: "Norman",
-      groupId: aug3Group.id,
-      title: "Archive Aug 3 documents",
-      description: "Scan and archive all Aug 3 receipts and delivery notes.",
-      priority: Priority.MEDIUM,
-      dueDate: new Date("2026-08-06"),
-    },
-    {
-      author: "Jer",
-      groupId: aug3Group.id,
-      title: "Follow up on unpaid entries",
-      description: "Contact the 3 unpaid debtors and record their responses.",
-      priority: Priority.URGENT,
-      dueDate: new Date("2026-08-07"),
-    },
-    {
-      author: "Ber",
-      groupId: aug3Group.id,
-      title: "Print summary report",
-      description: "Generate and print the Aug 3 summary report for the admin.",
-      priority: Priority.LOW,
-      dueDate: new Date("2026-08-08"),
-    },
-  ];
-
-  for (const t of sampleTasks) {
-    const author = userByName.get(t.author);
-    if (!author) continue;
-
-    await prisma.task.create({
-      data: {
-        title: t.title,
-        description: t.description,
-        priority: t.priority,
-        dueDate: t.dueDate,
-        authorId: author.id,
-        groupId: t.groupId,
-        activityLogs: {
-          create: {
-            actorId: author.id,
-            action: "CREATED",
-            metadata: { source: "seed" },
+    // Link Stops
+    let sequence = 1;
+    for (const stopName of r.stops) {
+      const stop = stops[stopName];
+      if (stop) {
+        await prisma.routeStop.create({
+          data: {
+            variantId: variant.id,
+            stopId: stop.id,
+            sequence: sequence++,
+            isTerminal: sequence === 1 || stopName === r.stops[r.stops.length - 1],
           },
-        },
-      },
-    });
+        });
+      }
+    }
   }
-  console.log(`📝 ${sampleTasks.length} sample tasks created`);
+  
+  console.log(`🛣️  ${routesData.length} routes created (geometry will be auto-generated on map load)`);
 
-  // ─── Admin reviews one task as a demo ───
-  const firstTask = await prisma.task.findFirst({
-    where: { author: { name: "Jasmin" } },
-    orderBy: { createdAt: "asc" },
+  // ─── Fares ───
+  await prisma.fare.createMany({
+    data: [
+      { routeId: (await prisma.route.findUnique({ where: { code: "SP-NAG" } }))!.id, passengerType: "REGULAR", amountMin: 25, amountMax: 25, source: "verified" },
+      { routeId: (await prisma.route.findUnique({ where: { code: "SP-LIL" } }))!.id, passengerType: "REGULAR", amountMin: 40, amountMax: 40, source: "verified" },
+      { routeId: (await prisma.route.findUnique({ where: { code: "NAG-LIL" } }))!.id, passengerType: "REGULAR", amountMin: 13, amountMax: 13, source: "verified" },
+    ],
   });
-
-  if (firstTask) {
-    await prisma.task.update({
-      where: { id: firstTask.id },
-      data: {
-        reviewedById: admin.id,
-        reviewedAt: new Date(),
-        reviewNotes: "Reviewed during seed. Looks complete.",
-        activityLogs: {
-          create: {
-            actorId: admin.id,
-            action: "REVIEWED",
-            metadata: { source: "seed" },
-          },
-        },
-      },
-    });
-    console.log("🔍 Admin reviewed one task as a demo");
-  }
+  console.log("💰 3 fare records created");
 
   console.log("\n✅ Seed completed!");
-  console.log("   - Admin login: admin@example.com / 123123");
-  console.log(
-    `   - ${users.length} user logins (e.g. jasmin@example.com / 123123)`,
-  );
-  console.log(`   - ${sampleTasks.length} tasks`);
 }
 
 main()

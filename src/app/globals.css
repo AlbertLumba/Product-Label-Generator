@@ -1,77 +1,68 @@
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   📁 src/app/globals.css
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-:root {
-  /* Surfaces */
-  --gw-bg:        #0d1117;
-  --gw-bg1:       #161b22;
-  --gw-bg2:       #1c2128;
-  --gw-bg3:       #262c36;
-
-  /* Borders */
-  --gw-border:    #30363d;
-  --gw-border-hi: #484f58;
-
-  /* Text */
-  --gw-text:  #e6edf3;
-  --gw-sub:   #b1bac4;
-  --gw-muted: #6e7681;
-
-  /* Green — approved / on-track */
-  --gw-fern:      #2a6b4a;
-  --gw-fern-hi:   #3a8a63;
-  --gw-fern-dim:  #1e4d35;
-  --gw-fern-bg:   #0e2a1d;
-  --gw-fern-text: #6ee7a8;
-
-  /* Amber — pending / in review */
-  --gw-amber:     #d99a2b;
-  --gw-amber-dim: #6b4a15;
-  --gw-amber-bg:  #2a1f08;
-
-  /* Red — rejected / overdue */
-  --gw-red:     #f06b6b;
-  --gw-red-dim: #6b2424;
-  --gw-red-bg:  #2a0e0e;
-
-  /* Cyan — new / submitted */
-  --gw-cyan:     #4dd4e0;
-  --gw-cyan-dim: #1a4d56;
-  --gw-cyan-bg:  #0a2429;
-
-  --background: var(--gw-bg);
-  --foreground: var(--gw-text);
+@theme {
+  --color-gw-bg:        var(--gw-bg);
+  --color-gw-bg1:       var(--gw-bg1);
+  --color-gw-bg2:       var(--gw-bg2);
+  --color-gw-bg3:       var(--gw-bg3);
+  --color-gw-border:    var(--gw-border);
+  --color-gw-border-hi: var(--gw-border-hi);
+  --color-gw-text:      var(--gw-text);
+  --color-gw-sub:       var(--gw-sub);
+  --color-gw-muted:     var(--gw-muted);
+  --color-gw-fern:      var(--gw-fern);
+  --color-gw-fern-hi:   var(--gw-fern-hi);
+  --color-gw-fern-dim:  var(--gw-fern-dim);
+  --color-gw-fern-bg:   var(--gw-fern-bg);
+  --color-gw-fern-text: var(--gw-fern-text);
+  --color-gw-amber:     var(--gw-amber);
+  --color-gw-amber-dim: var(--gw-amber-dim);
+  --color-gw-amber-bg:  var(--gw-amber-bg);
+  --color-gw-red:       var(--gw-red);
+  --color-gw-red-dim:   var(--gw-red-dim);
+  --color-gw-red-bg:    var(--gw-red-bg);
+  --color-gw-cyan:      var(--gw-cyan);
+  --color-gw-cyan-dim:  var(--gw-cyan-dim);
+  --color-gw-cyan-bg:   var(--gw-cyan-bg);
 }
 
-.light {
+:root {
   --gw-bg:        #f6f8fa;
   --gw-bg1:       #ffffff;
   --gw-bg2:       #f0f3f6;
   --gw-bg3:       #e5e9ee;
+
   --gw-border:    #d0d7de;
   --gw-border-hi: #afb8c1;
-  --gw-text:      #1f2328;
-  --gw-sub:       #57606a;
-  --gw-muted:     #8b949e;
+
+  --gw-text:  #1f2328;
+  --gw-sub:   #57606a;
+  --gw-muted: #8b949e;
+
   --gw-fern:      #1f7a4d;
   --gw-fern-hi:   #2a9c63;
   --gw-fern-dim:  #a7d9be;
   --gw-fern-bg:   #e8f5ee;
   --gw-fern-text: #1f7a4d;
+
   --gw-amber:     #b4791a;
   --gw-amber-dim: #e8c48a;
   --gw-amber-bg:  #fdf3e0;
-  --gw-red:       #c84b4b;
-  --gw-red-dim:   #e8a8a8;
-  --gw-red-bg:    #fbeaea;
-  --gw-cyan:      #1a8f9c;
-  --gw-cyan-dim:  #8fd4dc;
-  --gw-cyan-bg:   #e2f4f7;
+
+  --gw-red:     #c84b4b;
+  --gw-red-dim: #e8a8a8;
+  --gw-red-bg:  #fbeaea;
+
+  --gw-cyan:     #1a8f9c;
+  --gw-cyan-dim: #8fd4dc;
+  --gw-cyan-bg:  #e2f4f7;
+
+  color-scheme: light;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 body {

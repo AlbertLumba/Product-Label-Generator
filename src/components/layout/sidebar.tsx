@@ -1,6 +1,4 @@
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 📁 src/components/layout/sidebar.tsx
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// src/components/layout/sidebar.tsx
 
 "use client";
 
@@ -9,42 +7,33 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  ListChecks,
-  FolderKanban,
-  Users,
-  Activity,
+  Map as MapIcon,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useAuth } from "@/components/providers/AuthProvider";
-import type { NavIcon } from "@/lib/nav";
 
-const ICON_MAP: Record<NavIcon, React.ElementType> = {
-  dashboard: LayoutDashboard,
-  tasks: ListChecks,
-  groups: FolderKanban,
-  users: Users,
-  activity: Activity,
-};
+const NAV_ITEMS = [
+  { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+  { label: "Public Map", path: "/map", icon: MapIcon },
+];
 
 export default function Sidebar() {
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();
-  const { nav } = useAuth();
 
   return (
     <aside
-      className={`fixed left-0 top-14 bottom-0 bg-gw-bg1 border-r border-gw-border z-40 flex flex-col transition-[width] duration-200 ease-out ${
+      className={`fixed left-0 top-14 bottom-0 bg-[var(--gw-bg1)] border-r border-[var(--gw-border)] z-40 flex flex-col transition-[width] duration-200 ease-out ${
         expanded ? "w-48" : "w-14"
       }`}
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
     >
       <nav className="flex-1 py-3 px-2 space-y-2 overflow-y-auto overflow-x-hidden">
-        {nav.map((item) => {
-          const active =
-            pathname === item.path || pathname.startsWith(item.path + "/");
-          const Icon = ICON_MAP[item.icon] ?? LayoutDashboard;
+        {NAV_ITEMS.map((item) => {
+          // Check if the current path matches the item's path
+          const active = pathname === item.path || pathname.startsWith(item.path + "/");
+          const Icon = item.icon;
 
           return (
             <Link
@@ -55,8 +44,8 @@ export default function Sidebar() {
                 expanded ? "px-3 gap-3" : "justify-center"
               } ${
                 active
-                  ? "bg-gw-fern-bg text-gw-fern-text border border-gw-fern-dim"
-                  : "text-gw-sub hover:bg-gw-bg3 hover:text-gw-text border border-transparent"
+                  ? "bg-[var(--gw-fern-bg)] text-[var(--gw-fern-text)] border border-[var(--gw-fern-dim)]"
+                  : "text-[var(--gw-sub)] hover:bg-[var(--gw-bg3)] hover:text-[var(--gw-text)] border border-transparent"
               }`}
             >
               <Icon size={18} className="shrink-0" />
@@ -72,11 +61,10 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="p-2 border-t border-gw-border">
+      <div className="p-2 border-t border-[var(--gw-border)]">
         <button
           onClick={() => setExpanded(!expanded)}
-          className="w-full h-9 flex items-center justify-center rounded-lg text-gw-muted hover:text-gw-text hover:bg-gw-bg3 transition-colors"
-          aria-label={expanded ? "Collapse sidebar" : "Expand sidebar"}
+          className="w-full h-9 flex items-center justify-center rounded-lg text-[var(--gw-muted)] hover:text-[var(--gw-text)] hover:bg-[var(--gw-bg3)] transition-colors"
         >
           {expanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
         </button>
