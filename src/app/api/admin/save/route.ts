@@ -3,6 +3,18 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
+// Helper to fetch route from OSRM
+async function getOSRMRoute(startLng: number, startLat: number, endLng: number, endLat: number) {
+  const url = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    return data.routes?.[0]?.geometry || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -44,24 +56,15 @@ export async function PUT(req: Request) {
     const body = await req.json();
     const { id, name, lat, lng, geometry } = body;
 
-    // 1. If saving a route path (geometry)
+    // 1. If saving a route path (from dragging the line)
     if (geometry) {
-      const existingVariant = await prisma.routeVariant.findUnique({ where: { id } });
-      
-      if (!existingVariant) {
-        return NextResponse.json({ error: "Route variant not found" }, { status: 404 });
-      }
-
-      await prisma.routeVariant.update({ 
-        where: { id }, 
-        data: { geometry } 
-      });
+      await prisma.routeVariant.update({ where: { id }, data: { geometry } });
       return NextResponse.json({ success: true });
     }
 
-    // 2. If updating a terminal, do NOT clear geometry here.
-    // The frontend will send the new geometry after it fetches it from OSRM.
+    // 2. If updating a terminal
     if (id) {
+      // First, update the terminal coordinates
       await prisma.terminal.update({ 
         where: { id }, 
         data: { 
@@ -70,6 +73,40 @@ export async function PUT(req: Request) {
           ...(lng !== undefined && { longitude: lng }),
         } 
       });
+
+      // If the position moved, update the connected routes automatically
+      if (lat !== undefined && lng !== undefined) {
+        const connectedRoutes = await prisma.routeTerminal.findMany({
+          where: { terminalId: id },
+          include: { variant: true }
+        });
+
+        for (const rt of connectedRoutes) {
+          // Find the other terminal this route connects to
+          const allRouteTerminals = await prisma.routeTerminal.findMany({
+            where: { variantId: rt.variantId }
+          });
+          const otherTerminalId = allRouteTerminals.find(t => t.terminalId !== id)?.terminalId;
+          
+          if (!otherTerminalId) continue;
+
+          const startT = await prisma.terminal.findUnique({ where: { id } });
+          const endT = await prisma.terminal.findUnique({ where: { id: otherTerminalId } });
+
+          if (startT && endT) {
+            // Fetch the exact road path from OSRM
+            const newGeometry = await getOSRMRoute(startT.longitude, startT.latitude, endT.longitude, endT.latitude);
+            
+            // Save the new geometry
+            if (newGeometry) {
+              await prisma.routeVariant.update({
+                where: { id: rt.variantId },
+                data: { geometry: newGeometry }
+              });
+            }
+          }
+        }
+      }
 
       return NextResponse.json({ success: true });
     }
